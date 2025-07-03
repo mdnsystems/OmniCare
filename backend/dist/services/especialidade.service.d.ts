@@ -1,0 +1,152 @@
+import { EspecialidadeInput } from '../validators/especialidade.validator';
+import { TipoClinica } from '../types/enums';
+declare const _default: {
+    create(data: EspecialidadeInput & {
+        tenantId: string;
+        tipoClinica: TipoClinica;
+        configuracoes: any;
+    }): Promise<{
+        id: string;
+        tenantId: string;
+        nome: string;
+        ativo: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        descricao: string;
+        tipoClinica: import("generated/prisma").$Enums.TipoClinica;
+        configuracoes: import("generated/prisma/runtime/library").JsonValue;
+    }>;
+    findAll(tenantId?: string): Promise<({
+        profissionais: {
+            id: string;
+            tenantId: string;
+            nome: string;
+            createdAt: Date;
+            updatedAt: Date;
+            status: import("generated/prisma").$Enums.ProfissionalStatus;
+            dataNascimento: Date;
+            telefone: string;
+            email: string;
+            numero: string;
+            complemento: string | null;
+            bairro: string;
+            cep: string;
+            cidade: string;
+            estado: string;
+            especialidadeId: string;
+            registro: string;
+            crm: string | null;
+            sexo: string;
+            dataContratacao: Date;
+            rua: string;
+            horarioInicio: string;
+            horarioFim: string;
+            intervalo: string;
+            diasTrabalho: string[];
+        }[];
+    } & {
+        id: string;
+        tenantId: string;
+        nome: string;
+        ativo: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        descricao: string;
+        tipoClinica: import("generated/prisma").$Enums.TipoClinica;
+        configuracoes: import("generated/prisma/runtime/library").JsonValue;
+    })[]>;
+    findById(id: string, tenantId?: string): Promise<({
+        profissionais: {
+            id: string;
+            tenantId: string;
+            nome: string;
+            createdAt: Date;
+            updatedAt: Date;
+            status: import("generated/prisma").$Enums.ProfissionalStatus;
+            dataNascimento: Date;
+            telefone: string;
+            email: string;
+            numero: string;
+            complemento: string | null;
+            bairro: string;
+            cep: string;
+            cidade: string;
+            estado: string;
+            especialidadeId: string;
+            registro: string;
+            crm: string | null;
+            sexo: string;
+            dataContratacao: Date;
+            rua: string;
+            horarioInicio: string;
+            horarioFim: string;
+            intervalo: string;
+            diasTrabalho: string[];
+        }[];
+    } & {
+        id: string;
+        tenantId: string;
+        nome: string;
+        ativo: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        descricao: string;
+        tipoClinica: import("generated/prisma").$Enums.TipoClinica;
+        configuracoes: import("generated/prisma/runtime/library").JsonValue;
+    }) | null>;
+    update(id: string, data: EspecialidadeInput & {
+        tenantId?: string;
+        tipoClinica?: TipoClinica;
+        configuracoes?: any;
+    }, tenantId?: string): Promise<{
+        profissionais: {
+            id: string;
+            tenantId: string;
+            nome: string;
+            createdAt: Date;
+            updatedAt: Date;
+            status: import("generated/prisma").$Enums.ProfissionalStatus;
+            dataNascimento: Date;
+            telefone: string;
+            email: string;
+            numero: string;
+            complemento: string | null;
+            bairro: string;
+            cep: string;
+            cidade: string;
+            estado: string;
+            especialidadeId: string;
+            registro: string;
+            crm: string | null;
+            sexo: string;
+            dataContratacao: Date;
+            rua: string;
+            horarioInicio: string;
+            horarioFim: string;
+            intervalo: string;
+            diasTrabalho: string[];
+        }[];
+    } & {
+        id: string;
+        tenantId: string;
+        nome: string;
+        ativo: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        descricao: string;
+        tipoClinica: import("generated/prisma").$Enums.TipoClinica;
+        configuracoes: import("generated/prisma/runtime/library").JsonValue;
+    }>;
+    delete(id: string, tenantId?: string): Promise<{
+        id: string;
+        tenantId: string;
+        nome: string;
+        ativo: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        descricao: string;
+        tipoClinica: import("generated/prisma").$Enums.TipoClinica;
+        configuracoes: import("generated/prisma/runtime/library").JsonValue;
+    }>;
+};
+export default _default;

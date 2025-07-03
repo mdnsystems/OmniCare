@@ -1,0 +1,1 @@
+export type { Profissional } from '@/types/api'; 

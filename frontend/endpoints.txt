@@ -1,0 +1,269 @@
+Vou analisar o projeto para listar todos os endpoints disponíveis. Primeiro, vou examinar a estrutura de rotas do backend.
+
+Ran tool
+Agora vou examinar também os módulos de autenticação e clínica que estão em uma estrutura separada:
+
+Ran tool
+Ran tool
+Ran tool
+Agora vou examinar cada arquivo de rotas para listar todos os endpoints. Vou começar pelos módulos principais:
+
+Read file: backend/src/modules/auth/routes.ts
+Read file: backend/src/modules/clinica/routes.ts
+Agora vou examinar as rotas principais do sistema:
+
+Read file: backend/src/routes/agendamento.routes.ts
+Vou continuar examinando as outras rotas principais:
+
+Read file: backend/src/routes/paciente.routes.ts
+Read file: backend/src/routes/profissional.routes.ts
+Read file: backend/src/routes/faturamento.routes.ts
+Read file: backend/src/routes/pagamento.routes.ts
+Read file: backend/src/routes/chat.routes.ts
+Read file: backend/src/routes/dashboard.routes.ts
+Agora vou examinar as rotas restantes:
+
+Read file: backend/src/routes/prontuario.routes.ts
+Read file: backend/src/routes/anamnese.routes.ts
+Read file: backend/src/routes/especialidade.routes.ts
+Read file: backend/src/routes/exame.routes.ts
+Read file: backend/src/routes/mensagem.routes.ts
+Read file: backend/src/routes/message-template.routes.ts
+Read file: backend/src/routes/relatorio.routes.ts
+Read file: backend/src/routes/usuario.routes.ts
+Agora vou verificar se há algum arquivo de configuração de rotas principal para entender como elas são organizadas:
+
+Read file: backend/src/server.ts
+Agora vou verificar se há algum controller de upload de arquivos:
+
+Ran tool
+Ran tool
+Read file: backend/src/controllers/file.controller.ts
+Agora vou verificar se há rotas para o controller de arquivos:
+
+Ran tool
+Ran tool
+Vou verificar se há rotas de arquivo no servidor principal:
+
+Ran tool
+Agora vou criar uma lista completa de todos os endpoints baseada na análise dos arquivos:
+
+## 📋 **LISTA COMPLETA DE ENDPOINTS - OMNICARE API**
+
+### 🔐 **AUTENTICAÇÃO** (`/api/auth`)
+- `POST /api/auth/login` - Login de usuário
+- `POST /api/auth/register` - Registro de usuário
+- `POST /api/auth/refresh-token` - Renovar token
+- `POST /api/auth/forgot-password` - Esqueci minha senha
+- `POST /api/auth/reset-password` - Redefinir senha
+- `POST /api/auth/verify-token` - Verificar token
+- `POST /api/auth/logout` - Logout (autenticado)
+- `GET /api/auth/profile` - Obter perfil (autenticado)
+- `PUT /api/auth/change-password` - Alterar senha (autenticado)
+
+### 🏥 **CLÍNICAS** (`/api/clinicas`)
+- `POST /api/clinicas` - Criar clínica (público)
+- `GET /api/clinicas` - Listar clínicas
+- `GET /api/clinicas/:id` - Buscar clínica por ID
+- `GET /api/clinicas/tenant/:tenantId` - Buscar clínica por tenant
+- `PUT /api/clinicas/:id` - Atualizar clínica (admin)
+- `PATCH /api/clinicas/:id/toggle-status` - Ativar/desativar clínica (admin)
+- `DELETE /api/clinicas/:id` - Deletar clínica (super admin)
+- `POST /api/clinicas/:tenantId/whatsapp` - Configurar WhatsApp (admin)
+- `GET /api/clinicas/:tenantId/whatsapp` - Obter configuração WhatsApp
+- `POST /api/clinicas/:tenantId/templates` - Criar template de mensagem (admin)
+- `GET /api/clinicas/:tenantId/templates` - Listar templates de mensagem
+- `PUT /api/clinicas/templates/:id` - Atualizar template (admin)
+- `DELETE /api/clinicas/templates/:id` - Deletar template (admin)
+- `GET /api/clinicas/:tenantId/stats` - Obter estatísticas da clínica
+
+### ��‍⚕️ **PROFISSIONAIS** (`/api/profissionais`)
+- `POST /api/profissionais` - Criar profissional (admin/profissional)
+- `GET /api/profissionais` - Listar profissionais
+- `GET /api/profissionais/:id` - Buscar profissional por ID
+- `PUT /api/profissionais/:id` - Atualizar profissional (admin/profissional)
+- `DELETE /api/profissionais/:id` - Deletar profissional (admin)
+
+### �� **ESPECIALIDADES** (`/api/especialidades`)
+- `POST /api/especialidades` - Criar especialidade (admin/profissional)
+- `GET /api/especialidades` - Listar especialidades
+- `GET /api/especialidades/:id` - Buscar especialidade por ID
+- `PUT /api/especialidades/:id` - Atualizar especialidade (admin/profissional)
+- `DELETE /api/especialidades/:id` - Deletar especialidade (admin)
+
+### 👥 **PACIENTES** (`/api/pacientes`)
+- `POST /api/pacientes` - Criar paciente (admin/profissional/recepcionista)
+- `GET /api/pacientes` - Listar pacientes
+- `GET /api/pacientes/:id` - Buscar paciente por ID
+- `PUT /api/pacientes/:id` - Atualizar paciente (admin/profissional/recepcionista)
+- `DELETE /api/pacientes/:id` - Deletar paciente (admin/profissional)
+
+### 📅 **AGENDAMENTOS** (`/api/agendamentos`)
+- `POST /api/agendamentos` - Criar agendamento (admin/profissional/recepcionista)
+- `GET /api/agendamentos` - Listar agendamentos
+- `GET /api/agendamentos/:id` - Buscar agendamento por ID
+- `PUT /api/agendamentos/:id` - Atualizar agendamento (admin/profissional/recepcionista)
+- `DELETE /api/agendamentos/:id` - Deletar agendamento (admin/profissional)
+- `PUT /api/agendamentos/:id/confirmar` - Confirmar agendamento
+- `PUT /api/agendamentos/:id/cancelar` - Cancelar agendamento
+- `PUT /api/agendamentos/:id/remarcar` - Remarcar agendamento
+- `PUT /api/agendamentos/:id/realizar` - Realizar agendamento (admin/profissional)
+- `GET /api/agendamentos/data/:data` - Agendamentos por data
+- `GET /api/agendamentos/profissional/:profissionalId` - Agendamentos por profissional
+- `GET /api/agendamentos/paciente/:pacienteId` - Agendamentos por paciente
+- `GET /api/agendamentos/hoje` - Agendamentos de hoje
+- `GET /api/agendamentos/semana` - Agendamentos da semana
+- `GET /api/agendamentos/mes` - Agendamentos do mês
+- `POST /api/agendamentos/confirmar-via-link` - Confirmar via link (público)
+- `POST /api/agendamentos/cancelar-via-link` - Cancelar via link (público)
+- `POST /api/agendamentos/verificar-disponibilidade` - Verificar disponibilidade
+- `GET /api/agendamentos/horarios-disponiveis/:profissionalId` - Horários disponíveis
+- `GET /api/agendamentos/estatisticas` - Estatísticas de agendamentos
+- `POST /api/agendamentos/enviar-lembrete/:id` - Enviar lembrete
+- `POST /api/agendamentos/importar` - Importar agendamentos (admin)
+- `GET /api/agendamentos/exportar` - Exportar agendamentos
+
+### �� **PRONTUÁRIOS** (`/api/prontuarios`)
+- `POST /api/prontuarios` - Criar prontuário (admin/profissional)
+- `GET /api/prontuarios` - Listar prontuários
+- `GET /api/prontuarios/:id` - Buscar prontuário por ID
+- `PUT /api/prontuarios/:id` - Atualizar prontuário (admin/profissional)
+- `DELETE /api/prontuarios/:id` - Deletar prontuário (admin/profissional)
+
+### 📝 **ANAMNESES** (`/api/anamneses`)
+- `POST /api/anamneses` - Criar anamnese (admin/profissional)
+- `GET /api/anamneses` - Listar anamneses
+- `GET /api/anamneses/:id` - Buscar anamnese por ID
+- `PUT /api/anamneses/:id` - Atualizar anamnese (admin/profissional)
+- `DELETE /api/anamneses/:id` - Deletar anamnese (admin/profissional)
+
+### 🔬 **EXAMES** (`/api/exames`)
+- `POST /api/exames` - Criar exame (admin/profissional)
+- `GET /api/exames` - Listar exames
+- `GET /api/exames/:id` - Buscar exame por ID
+- `PUT /api/exames/:id` - Atualizar exame (admin/profissional)
+- `DELETE /api/exames/:id` - Deletar exame (admin/profissional)
+
+### 💬 **CHAT** (`/api/chat`)
+- `GET /api/chat/chats` - Listar chats
+- `GET /api/chat/chats/:id` - Buscar chat por ID
+- `POST /api/chat/chats` - Criar chat
+- `PUT /api/chat/chats/:id` - Atualizar chat
+- `DELETE /api/chat/chats/:id` - Deletar chat
+- `POST /api/chat/chats/participantes` - Adicionar participante
+- `DELETE /api/chat/chats/participantes` - Remover participante
+- `GET /api/chat/chats/:chatId/mensagens` - Listar mensagens do chat
+
+### 💬 **MENSAGENS** (`/api/mensagens`)
+- `POST /api/mensagens` - Criar mensagem (admin/profissional/recepcionista)
+- `GET /api/mensagens` - Listar mensagens
+- `GET /api/mensagens/:id` - Buscar mensagem por ID
+- `PUT /api/mensagens/:id` - Atualizar mensagem (admin/profissional/recepcionista)
+- `DELETE /api/mensagens/:id` - Deletar mensagem (admin/profissional)
+
+### 📧 **TEMPLATES DE MENSAGEM** (`/api/message-templates`)
+- `POST /api/message-templates` - Criar template (admin)
+- `GET /api/message-templates` - Listar templates
+- `GET /api/message-templates/:id` - Buscar template por ID
+- `PUT /api/message-templates/:id` - Atualizar template (admin)
+- `DELETE /api/message-templates/:id` - Deletar template (admin)
+- `GET /api/message-templates/tipo/:tipo` - Templates por tipo
+- `GET /api/message-templates/ativos` - Templates ativos
+- `PATCH /api/message-templates/:id/ativar` - Ativar template (admin)
+- `PATCH /api/message-templates/:id/desativar` - Desativar template (admin)
+- `POST /api/message-templates/:id/duplicar` - Duplicar template (admin)
+
+### �� **FATURAMENTO** (`/api/faturamento`)
+- `POST /api/faturamento` - Criar faturamento (admin/profissional)
+- `GET /api/faturamento` - Listar faturamentos
+- `GET /api/faturamento/:id` - Buscar faturamento por ID
+- `PUT /api/faturamento/:id` - Atualizar faturamento (admin/profissional)
+- `DELETE /api/faturamento/:id` - Deletar faturamento (admin)
+- `GET /api/faturamento/paciente/:pacienteId` - Faturamentos por paciente
+- `GET /api/faturamento/profissional/:profissionalId` - Faturamentos por profissional
+- `GET /api/faturamento/status/:status` - Faturamentos por status
+- `GET /api/faturamento/vencidos` - Faturamentos vencidos
+- `GET /api/faturamento/a-vencer` - Faturamentos a vencer
+- `POST /api/faturamento/exportar` - Exportar faturamentos
+- `POST /api/faturamento/importar` - Importar faturamentos (admin)
+
+### �� **PAGAMENTOS** (`/api/pagamentos`)
+- `POST /api/pagamentos` - Criar pagamento (admin/profissional)
+- `GET /api/pagamentos` - Listar pagamentos
+- `GET /api/pagamentos/:id` - Buscar pagamento por ID
+- `PUT /api/pagamentos/:id` - Atualizar pagamento (admin/profissional)
+- `DELETE /api/pagamentos/:id` - Deletar pagamento (admin)
+- `GET /api/pagamentos/faturamento/:faturamentoId` - Pagamentos por faturamento
+- `GET /api/pagamentos/periodo/:dataInicio/:dataFim` - Pagamentos por período
+- `GET /api/pagamentos/forma/:formaPagamento` - Pagamentos por forma de pagamento
+- `POST /api/pagamentos/registrar` - Registrar pagamento
+- `POST /api/pagamentos/:id/estornar` - Estornar pagamento (admin)
+
+### �� **RELATÓRIOS** (`/api/relatorios`)
+- `POST /api/relatorios` - Criar relatório
+- `GET /api/relatorios` - Listar relatórios
+- `GET /api/relatorios/:id` - Buscar relatório por ID
+- `PUT /api/relatorios/:id` - Atualizar relatório
+- `DELETE /api/relatorios/:id` - Deletar relatório (admin)
+- `POST /api/relatorios/consultas` - Gerar relatório de consultas
+- `POST /api/relatorios/faturamento` - Gerar relatório de faturamento
+- `POST /api/relatorios/desempenho` - Gerar relatório de desempenho
+- `POST /api/relatorios/receitas` - Gerar relatório de receitas
+- `POST /api/relatorios/profissionais` - Gerar relatório de profissionais
+- `POST /api/relatorios/prontuarios` - Gerar relatório de prontuários
+- `POST /api/relatorios/customizado` - Gerar relatório customizado
+- `GET /api/relatorios/templates` - Obter templates de relatório
+- `GET /api/relatorios/templates/:id` - Obter template específico
+- `POST /api/relatorios/templates` - Criar template (admin)
+- `PUT /api/relatorios/templates/:id` - Atualizar template (admin)
+- `DELETE /api/relatorios/templates/:id` - Deletar template (admin)
+- `POST /api/relatorios/agendados` - Agendar relatório (admin)
+- `GET /api/relatorios/agendados` - Obter relatórios agendados
+- `PUT /api/relatorios/agendados/:id` - Atualizar relatório agendado (admin)
+- `DELETE /api/relatorios/agendados/:id` - Deletar relatório agendado (admin)
+- `GET /api/relatorios/historico` - Obter histórico de relatórios
+
+### 📈 **DASHBOARD** (`/api/dashboard`)
+- `GET /api/dashboard` - Dashboard geral
+- `GET /api/dashboard/agendamentos` - Estatísticas de agendamentos
+- `GET /api/dashboard/financeiro` - Estatísticas financeiras (admin)
+- `GET /api/dashboard/pacientes` - Estatísticas de pacientes
+- `GET /api/dashboard/profissionais` - Estatísticas de profissionais (admin)
+- `GET /api/dashboard/prontuarios` - Estatísticas de prontuários
+- `GET /api/dashboard/anamnese` - Estatísticas de anamnese
+- `GET /api/dashboard/atividades` - Estatísticas de atividades
+
+### 👤 **USUÁRIOS** (`/api/usuarios`)
+- `POST /api/usuarios/login` - Login de usuário (público)
+- `POST /api/usuarios/registrar` - Registrar usuário (admin/super admin)
+- `GET /api/usuarios/listar` - Listar usuários (admin/super admin)
+- `GET /api/usuarios/:id` - Buscar usuário por ID (admin/super admin)
+- `PUT /api/usuarios/:id/atualizar` - Atualizar usuário (admin/super admin)
+- `PUT /api/usuarios/:id/alterar-senha` - Alterar senha (admin/super admin)
+- `DELETE /api/usuarios/:id/desativar` - Desativar usuário (admin/super admin)
+
+### 🌐 **ROTAS PÚBLICAS**
+- `GET /` - Página inicial da API
+- `GET /health` - Health check da API
+
+---
+
+## 🔐 **NÍVEIS DE AUTORIZAÇÃO**
+
+- **PÚBLICO**: Endpoints que não precisam de autenticação
+- **AUTENTICADO**: Endpoints que precisam apenas de token válido
+- **ADMIN**: Endpoints que precisam de role ADMIN ou SUPER_ADMIN
+- **PROFISSIONAL**: Endpoints que precisam de role PROFISSIONAL ou superior
+- **RECEPCIONISTA**: Endpoints que precisam de role RECEPCIONISTA ou superior
+- **SUPER_ADMIN**: Endpoints que precisam especificamente de role SUPER_ADMIN
+
+## �� **OBSERVAÇÕES**
+
+1. **Multitenant**: Todos os endpoints (exceto públicos) aplicam middleware de tenant
+2. **Rate Limiting**: Aplicado em todas as rotas `/api/`
+3. **CORS**: Configurado para origens permitidas
+4. **WebSocket**: Disponível para comunicação em tempo real
+5. **Validação**: Todos os endpoints implementam validação de dados
+6. **Tratamento de Erros**: Middleware global para tratamento de erros
+
+Esta é a lista completa de todos os endpoints disponíveis na API do OmniCare, organizados por módulo e com suas respectivas permissões de acesso.

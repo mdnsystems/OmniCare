@@ -1,0 +1,827 @@
+-- Scripts de inserção para banco de dados da clínica
+-- Execute estes comandos diretamente no seu banco PostgreSQL
+
+-- =====================================================
+-- INSERÇÃO DE DADOS PARA TODAS AS TABELAS
+-- =====================================================
+
+-- 1. INSERIR CLÍNICA (TENANT)
+INSERT INTO clinicas (id, tenant_id, nome, tipo, logo, "corPrimaria", "corSecundaria", tema, ativo, "createdAt", "updatedAt")
+VALUES (
+    gen_random_uuid(),
+    'tenant-001',
+    'Clínica Exemplo',
+    'MEDICA',
+    'https://via.placeholder.com/150',
+    '#2563eb',
+    '#1e40af',
+    'light',
+    true,
+    NOW(),
+    NOW()
+);
+
+-- 2. INSERIR USUÁRIO ADMIN
+INSERT INTO usuarios (id, tenant_id, email, senha, role, profissional_id, ativo, "createdAt", "updatedAt")
+VALUES (
+    gen_random_uuid(),
+    'tenant-001',
+    'admin@clinica.com',
+    'senha123',
+    'ADMIN',
+    NULL,
+    true,
+    NOW(),
+    NOW()
+);
+
+-- 3. INSERIR ESPECIALIDADE
+INSERT INTO especialidades (id, tenant_id, nome, descricao, tipo_clinica, configuracoes, ativo, "createdAt", "updatedAt")
+VALUES (
+    gen_random_uuid(),
+    'tenant-001',
+    'Clínico Geral',
+    'Atendimento geral',
+    'MEDICA',
+    '{}',
+    true,
+    NOW(),
+    NOW()
+);
+
+-- 4. INSERIR PROFISSIONAL
+INSERT INTO profissionais (
+    id, tenant_id, nome, especialidade_id, registro, crm, email, telefone, sexo, 
+    data_nascimento, data_contratacao, status, rua, numero, complemento, bairro, 
+    cidade, estado, cep, horario_inicio, horario_fim, intervalo, dias_trabalho, 
+    "createdAt", "updatedAt"
+)
+SELECT 
+    gen_random_uuid(),
+    'tenant-001',
+    'Dr. João Silva',
+    e.id,
+    'CRM12345',
+    'CRM12345',
+    'joao@clinica.com',
+    '11999999999',
+    'M',
+    '1980-01-01',
+    '2020-01-01',
+    'ATIVO',
+    'Rua Exemplo',
+    '100',
+    NULL,
+    'Centro',
+    'São Paulo',
+    'SP',
+    '01000-000',
+    '08:00',
+    '18:00',
+    '12:00-13:00',
+    ARRAY['SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA'],
+    NOW(),
+    NOW()
+FROM especialidades e WHERE e.tenant_id = 'tenant-001' LIMIT 1;
+
+-- 5. INSERIR PACIENTE
+INSERT INTO pacientes (
+    id, tenant_id, nome, data_nascimento, cpf, telefone, email, endereco, numero, 
+    complemento, bairro, cep, cidade, estado, pais, convenio_nome, convenio_numero, 
+    convenio_plano, convenio_validade, profissional_id, campos_personalizados, 
+    "createdAt", "updatedAt"
+)
+SELECT 
+    gen_random_uuid(),
+    'tenant-001',
+    'Maria Souza',
+    '1990-05-10',
+    '123.456.789-00',
+    '11988888888',
+    'maria@paciente.com',
+    'Av. Principal',
+    '200',
+    NULL,
+    'Bairro Novo',
+    '02000-000',
+    'São Paulo',
+    'SP',
+    'Brasil',
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    p.id,
+    NULL,
+    NOW(),
+    NOW()
+FROM profissionais p WHERE p.tenant_id = 'tenant-001' LIMIT 1;
+
+-- 6. INSERIR AGENDAMENTOS
+INSERT INTO agendamentos (
+    id, tenant_id, paciente_id, profissional_id, data, hora_inicio, hora_fim, 
+    tipo, status, observacoes, campos_personalizados, "createdAt", "updatedAt"
+)
+SELECT 
+    gen_random_uuid(),
+    'tenant-001',
+    pac.id,
+    prof.id,
+    '2024-01-15',
+    '09:00',
+    '10:00',
+    'CONSULTA',
+    'CONFIRMADO',
+    'Primeira consulta',
+    NULL,
+    NOW(),
+    NOW()
+FROM pacientes pac, profissionais prof 
+WHERE pac.tenant_id = 'tenant-001' AND prof.tenant_id = 'tenant-001'
+LIMIT 1;
+
+INSERT INTO agendamentos (
+    id, tenant_id, paciente_id, profissional_id, data, hora_inicio, hora_fim, 
+    tipo, status, observacoes, campos_personalizados, "createdAt", "updatedAt"
+)
+SELECT 
+    gen_random_uuid(),
+    'tenant-001',
+    pac.id,
+    prof.id,
+    '2024-01-20',
+    '14:00',
+    '15:00',
+    'RETORNO',
+    'AGENDADO',
+    'Retorno para avaliação',
+    NULL,
+    NOW(),
+    NOW()
+FROM pacientes pac, profissionais prof 
+WHERE pac.tenant_id = 'tenant-001' AND prof.tenant_id = 'tenant-001'
+LIMIT 1;
+
+-- 7. INSERIR PRONTUÁRIOS
+INSERT INTO prontuarios (
+    id, tenant_id, paciente_id, profissional_id, data, tipo, descricao, 
+    diagnostico, prescricao, observacoes, campos_personalizados, "createdAt", "updatedAt"
+)
+SELECT 
+    gen_random_uuid(),
+    'tenant-001',
+    pac.id,
+    prof.id,
+    '2024-01-15',
+    'CONSULTA',
+    'Primeira consulta - Paciente com queixa de dor de cabeça',
+    'Cefaleia tensional',
+    'Paracetamol 500mg 6/6h por 3 dias',
+    'Paciente orientada sobre hábitos de vida',
+    NULL,
+    NOW(),
+    NOW()
+FROM pacientes pac, profissionais prof 
+WHERE pac.tenant_id = 'tenant-001' AND prof.tenant_id = 'tenant-001'
+LIMIT 1;
+
+INSERT INTO prontuarios (
+    id, tenant_id, paciente_id, profissional_id, data, tipo, descricao, 
+    diagnostico, prescricao, observacoes, campos_personalizados, "createdAt", "updatedAt"
+)
+SELECT 
+    gen_random_uuid(),
+    'tenant-001',
+    pac.id,
+    prof.id,
+    '2024-01-20',
+    'RETORNO',
+    'Retorno - Melhora da cefaleia',
+    'Cefaleia tensional - Melhorada',
+    'Manter hábitos saudáveis',
+    'Paciente evoluiu bem',
+    NULL,
+    NOW(),
+    NOW()
+FROM pacientes pac, profissionais prof 
+WHERE pac.tenant_id = 'tenant-001' AND prof.tenant_id = 'tenant-001'
+LIMIT 1;
+
+-- 8. INSERIR ANAMNESE
+INSERT INTO anamneses (
+    id, tenant_id, paciente_id, profissional_id, prontuario_id, data, template_id, 
+    campos, "createdAt", "updatedAt"
+)
+SELECT 
+    gen_random_uuid(),
+    'tenant-001',
+    pac.id,
+    prof.id,
+    pr.id,
+    '2024-01-15',
+    'template-001',
+    '{
+        "queixaPrincipal": "Dor de cabeça há 3 dias",
+        "historiaAtual": "Dor pulsátil na região frontal",
+        "antecedentesPatologicos": "Hipertensão arterial",
+        "antecedentesGinecologicos": "N/A",
+        "antecedentesCirurgicos": "Nenhum",
+        "medicamentosEmUso": "Losartana 50mg",
+        "habitos": "Não fuma, não bebe",
+        "antecedentesFamiliares": "Pai diabético",
+        "exameFisico": "PA: 140/90 mmHg, FC: 80 bpm"
+    }',
+    NOW(),
+    NOW()
+FROM pacientes pac, profissionais prof, prontuarios pr
+WHERE pac.tenant_id = 'tenant-001' 
+  AND prof.tenant_id = 'tenant-001' 
+  AND pr.tenant_id = 'tenant-001'
+  AND pr.tipo = 'CONSULTA'
+LIMIT 1;
+
+-- 9. INSERIR EXAMES
+INSERT INTO exames (
+    id, tenant_id, prontuario_id, tipo, data, resultado, observacoes, 
+    arquivos, "createdAt", "updatedAt"
+)
+SELECT 
+    gen_random_uuid(),
+    'tenant-001',
+    pr.id,
+    'Hemograma Completo',
+    '2024-01-16',
+    'Hemoglobina: 13.5 g/dL, Leucócitos: 7.500/mm³',
+    'Exame dentro dos parâmetros normais',
+    '["https://exemplo.com/exame1.pdf"]',
+    NOW(),
+    NOW()
+FROM prontuarios pr WHERE pr.tenant_id = 'tenant-001' AND pr.tipo = 'CONSULTA'
+LIMIT 1;
+
+INSERT INTO exames (
+    id, tenant_id, prontuario_id, tipo, data, resultado, observacoes, 
+    arquivos, "createdAt", "updatedAt"
+)
+SELECT 
+    gen_random_uuid(),
+    'tenant-001',
+    pr.id,
+    'Glicemia em Jejum',
+    '2024-01-16',
+    '95 mg/dL',
+    'Glicemia normal',
+    '["https://exemplo.com/exame2.pdf"]',
+    NOW(),
+    NOW()
+FROM prontuarios pr WHERE pr.tenant_id = 'tenant-001' AND pr.tipo = 'CONSULTA'
+LIMIT 1;
+
+-- 10. INSERIR FATURAMENTO
+INSERT INTO faturamentos (
+    id, tenant_id, paciente_id, profissional_id, agendamento_id, prontuario_id,
+    tipo, valor, desconto, "valorFinal", valor_pago, "formaPagamento", status,
+    data_vencimento, data_pagamento, observacoes, campos_personalizados,
+    "createdAt", "updatedAt"
+)
+SELECT 
+    gen_random_uuid(),
+    'tenant-001',
+    pac.id,
+    prof.id,
+    ag.id,
+    pr.id,
+    'CONSULTA',
+    150.00,
+    0.00,
+    150.00,
+    0.00,
+    'PIX',
+    'PENDENTE',
+    '2024-01-25',
+    NULL,
+    'Pagamento pendente',
+    '{}',
+    NOW(),
+    NOW()
+FROM pacientes pac, profissionais prof, agendamentos ag, prontuarios pr
+WHERE pac.tenant_id = 'tenant-001' 
+  AND prof.tenant_id = 'tenant-001'
+  AND ag.tenant_id = 'tenant-001'
+  AND pr.tenant_id = 'tenant-001'
+  AND ag.tipo = 'CONSULTA'
+  AND pr.tipo = 'CONSULTA'
+LIMIT 1;
+
+INSERT INTO faturamentos (
+    id, tenant_id, paciente_id, profissional_id, agendamento_id, prontuario_id,
+    tipo, valor, desconto, "valorFinal", valor_pago, "formaPagamento", status,
+    data_vencimento, data_pagamento, observacoes, campos_personalizados,
+    "createdAt", "updatedAt"
+)
+SELECT 
+    gen_random_uuid(),
+    'tenant-001',
+    pac.id,
+    prof.id,
+    ag.id,
+    pr.id,
+    'RETORNO',
+    100.00,
+    0.00,
+    100.00,
+    100.00,
+    'PIX',
+    'PAGO',
+    '2024-01-30',
+    '2024-01-20',
+    'Pagamento realizado',
+    '{}',
+    NOW(),
+    NOW()
+FROM pacientes pac, profissionais prof, agendamentos ag, prontuarios pr
+WHERE pac.tenant_id = 'tenant-001' 
+  AND prof.tenant_id = 'tenant-001'
+  AND ag.tenant_id = 'tenant-001'
+  AND pr.tenant_id = 'tenant-001'
+  AND ag.tipo = 'RETORNO'
+  AND pr.tipo = 'RETORNO'
+LIMIT 1;
+
+-- 11. INSERIR PAGAMENTOS
+INSERT INTO pagamentos (
+    id, tenant_id, faturamento_id, valor, forma_pagamento, data_pagamento,
+    comprovante, observacoes, "createdAt", "updatedAt"
+)
+SELECT 
+    gen_random_uuid(),
+    'tenant-001',
+    fat.id,
+    100.00,
+    'PIX',
+    '2024-01-20',
+    'https://exemplo.com/comprovante1.pdf',
+    'Pagamento via PIX',
+    NOW(),
+    NOW()
+FROM faturamentos fat WHERE fat.tenant_id = 'tenant-001' AND fat.status = 'PAGO'
+LIMIT 1;
+
+-- 12. INSERIR FATURAS DA CLÍNICA
+INSERT INTO faturas_clinica (
+    id, tenant_id, numero_fatura, valor, data_vencimento, data_pagamento,
+    status, dias_atraso, nivel_bloqueio, observacoes, "createdAt", "updatedAt"
+)
+VALUES (
+    gen_random_uuid(),
+    'tenant-001',
+    'FAT-2024-001',
+    500.00,
+    '2024-02-15',
+    NULL,
+    'PENDENTE',
+    0,
+    'SEM_BLOQUEIO',
+    'Fatura mensal - Janeiro 2024',
+    NOW(),
+    NOW()
+);
+
+-- 13. INSERIR PAGAMENTOS DA CLÍNICA
+INSERT INTO pagamentos_clinica (
+    id, fatura_id, valor, forma_pagamento, data_pagamento, comprovante,
+    observacoes, "createdAt", "updatedAt"
+)
+SELECT 
+    gen_random_uuid(),
+    fc.id,
+    250.00,
+    'PIX',
+    '2024-01-15',
+    'https://exemplo.com/comprovante-clinica.pdf',
+    'Pagamento parcial',
+    NOW(),
+    NOW()
+FROM faturas_clinica fc WHERE fc.tenant_id = 'tenant-001'
+LIMIT 1;
+
+-- 14. INSERIR LEMBRETES PARA CLÍNICA
+INSERT INTO lembretes_clinica (
+    id, fatura_id, tipo, mensagem, data_envio, status_envio, destinatario,
+    "createdAt", "updatedAt"
+)
+SELECT 
+    gen_random_uuid(),
+    fc.id,
+    'NOTIFICACAO_3_DIAS',
+    'Sua fatura vence em 3 dias. Valor: R$ 500,00',
+    '2024-02-12',
+    'ENVIADO',
+    'admin@clinica.com',
+    NOW(),
+    NOW()
+FROM faturas_clinica fc WHERE fc.tenant_id = 'tenant-001'
+LIMIT 1;
+
+-- 15. INSERIR HISTÓRICO DE BLOQUEIOS
+INSERT INTO historico_bloqueios (
+    id, fatura_id, nivel_anterior, nivel_novo, motivo, aplicado_por,
+    data_aplicacao, "createdAt"
+)
+SELECT 
+    gen_random_uuid(),
+    fc.id,
+    'SEM_BLOQUEIO',
+    'NOTIFICACAO',
+    'Fatura vencida há 5 dias',
+    'sistema',
+    '2024-02-20',
+    NOW()
+FROM faturas_clinica fc WHERE fc.tenant_id = 'tenant-001'
+LIMIT 1;
+
+-- 16. INSERIR TEMPLATES DE ESPECIALIDADE
+INSERT INTO template_especialidades (
+    id, tenant_id, nome, descricao, tipo_clinica, categoria, campos,
+    validacoes, ativo, ordem, "createdAt", "updatedAt"
+)
+VALUES (
+    gen_random_uuid(),
+    'tenant-001',
+    'Template Anamnese Clínico Geral',
+    'Template padrão para anamnese de clínico geral',
+    'MEDICA',
+    'ANAMNESE',
+    '{
+        "queixaPrincipal": {"tipo": "TEXTO", "obrigatorio": true},
+        "historiaAtual": {"tipo": "TEXTAREA", "obrigatorio": true},
+        "antecedentesPatologicos": {"tipo": "TEXTAREA", "obrigatorio": false},
+        "medicamentosEmUso": {"tipo": "TEXTAREA", "obrigatorio": false},
+        "habitos": {"tipo": "TEXTAREA", "obrigatorio": false},
+        "antecedentesFamiliares": {"tipo": "TEXTAREA", "obrigatorio": false},
+        "exameFisico": {"tipo": "TEXTAREA", "obrigatorio": true}
+    }',
+    '{}',
+    true,
+    1,
+    NOW(),
+    NOW()
+);
+
+-- 17. INSERIR CAMPOS PERSONALIZADOS
+INSERT INTO campos_personalizados (
+    id, tenant_id, nome, tipo, categoria, obrigatorio, opcoes, valor_padrao,
+    validacoes, dependencias, ordem, ativo, template_id, "createdAt", "updatedAt"
+)
+VALUES (
+    gen_random_uuid(),
+    'tenant-001',
+    'Alergias',
+    'TEXTAREA',
+    'PACIENTE',
+    false,
+    '{}',
+    '',
+    '{}',
+    '{}',
+    1,
+    true,
+    NULL,
+    NOW(),
+    NOW()
+);
+
+-- 18. INSERIR FLUXOS DE ESPECIALIDADE
+INSERT INTO fluxos_especialidades (
+    id, tenant_id, nome, descricao, tipo_clinica, etapas, validacoes,
+    ativo, "createdAt", "updatedAt"
+)
+VALUES (
+    gen_random_uuid(),
+    'tenant-001',
+    'Fluxo Consulta Primeira Vez',
+    'Fluxo padrão para primeira consulta',
+    'MEDICA',
+    '[
+        {"nome": "Recepção", "acao": "registrar_chegada"},
+        {"nome": "Anamnese", "acao": "preencher_anamnese"},
+        {"nome": "Exame Físico", "acao": "realizar_exame"},
+        {"nome": "Diagnóstico", "acao": "definir_diagnostico"},
+        {"nome": "Prescrição", "acao": "prescrever_medicamentos"}
+    ]',
+    '{}',
+    true,
+    NOW(),
+    NOW()
+);
+
+-- 19. INSERIR RELATÓRIOS DE ESPECIALIDADE
+INSERT INTO relatorios_especialidades (
+    id, tenant_id, nome, descricao, tipo_clinica, tipo, parametros,
+    template, ativo, "createdAt", "updatedAt"
+)
+VALUES (
+    gen_random_uuid(),
+    'tenant-001',
+    'Relatório de Consultas',
+    'Relatório mensal de consultas realizadas',
+    'MEDICA',
+    'CONSULTAS',
+    '{
+        "dataInicio": "date",
+        "dataFim": "date",
+        "profissionalId": "string"
+    }',
+    'relatorio-consultas.html',
+    true,
+    NOW(),
+    NOW()
+);
+
+-- 20. INSERIR DASHBOARDS DE ESPECIALIDADE
+INSERT INTO dashboards_especialidades (
+    id, tenant_id, nome, descricao, tipo_clinica, widgets, layout,
+    ativo, "createdAt", "updatedAt"
+)
+VALUES (
+    gen_random_uuid(),
+    'tenant-001',
+    'Dashboard Clínico Geral',
+    'Dashboard principal para clínico geral',
+    'MEDICA',
+    '[
+        {"tipo": "consultas_hoje", "posicao": {"x": 0, "y": 0, "w": 6, "h": 4}},
+        {"tipo": "pacientes_ativos", "posicao": {"x": 6, "y": 0, "w": 6, "h": 4}},
+        {"tipo": "faturamento_mensal", "posicao": {"x": 0, "y": 4, "w": 12, "h": 4}}
+    ]',
+    '{"colunas": 12, "linhas": 8}',
+    true,
+    NOW(),
+    NOW()
+);
+
+-- 21. INSERIR CONFIGURAÇÃO WHATSAPP
+INSERT INTO clinica_whatsapp_config (
+    id, tenant_id, z_api_instance_id, z_api_token, numero_whatsapp,
+    mensagens_ativas, horario_envio_lembrete, dias_antecedencia_lembrete,
+    ativo, "createdAt", "updatedAt"
+)
+VALUES (
+    gen_random_uuid(),
+    'tenant-001',
+    'instance-001',
+    'token-exemplo',
+    '5511999999999',
+    '{
+        "lembreteConsulta": true,
+        "confirmacaoConsulta": true,
+        "cancelamentoConsulta": true
+    }',
+    '08:00',
+    1,
+    true,
+    NOW(),
+    NOW()
+);
+
+-- 22. INSERIR TEMPLATES DE MENSAGEM
+INSERT INTO message_templates (
+    id, tenant_id, nome, tipo, template, variaveis, ativo, "createdAt", "updatedAt"
+)
+SELECT 
+    gen_random_uuid(),
+    cwc.tenant_id,
+    'Lembrete de Consulta',
+    'LEMBRETE',
+    'Olá {nome}, sua consulta está marcada para {data} às {hora}. Confirme sua presença.',
+    '["nome", "data", "hora"]',
+    true,
+    NOW(),
+    NOW()
+FROM clinica_whatsapp_config cwc WHERE cwc.tenant_id = 'tenant-001'
+LIMIT 1;
+
+-- 23. INSERIR CHAT
+INSERT INTO chats (
+    id, tenant_id, tipo, nome, descricao, criado_por, ativo, "createdAt", "updatedAt"
+)
+SELECT 
+    gen_random_uuid(),
+    'tenant-001',
+    'GERAL',
+    'Chat Geral da Clínica',
+    'Chat para comunicação geral da equipe',
+    u.id,
+    true,
+    NOW(),
+    NOW()
+FROM usuarios u WHERE u.tenant_id = 'tenant-001' AND u.role = 'ADMIN'
+LIMIT 1;
+
+-- 24. INSERIR PARTICIPANTES DO CHAT
+INSERT INTO chat_participantes (
+    id, chat_id, user_id, tenant_id, admin, ativo, "createdAt", "updatedAt"
+)
+SELECT 
+    gen_random_uuid(),
+    c.id,
+    u.id,
+    'tenant-001',
+    true,
+    true,
+    NOW(),
+    NOW()
+FROM chats c, usuarios u 
+WHERE c.tenant_id = 'tenant-001' 
+  AND u.tenant_id = 'tenant-001' 
+  AND u.role = 'ADMIN'
+LIMIT 1;
+
+-- 25. INSERIR MENSAGENS
+INSERT INTO mensagens (
+    id, tenant_id, chat_id, sender_id, sender_name, sender_role, content,
+    timestamp, editada, editada_em, usuario_id, "createdAt", "updatedAt"
+)
+SELECT 
+    gen_random_uuid(),
+    'tenant-001',
+    c.id,
+    u.id,
+    'Admin',
+    'ADMIN',
+    'Bem-vindos ao chat da clínica!',
+    '2024-01-15 08:00:00',
+    false,
+    NULL,
+    u.id,
+    NOW(),
+    NOW()
+FROM chats c, usuarios u 
+WHERE c.tenant_id = 'tenant-001' 
+  AND u.tenant_id = 'tenant-001' 
+  AND u.role = 'ADMIN'
+LIMIT 1;
+
+INSERT INTO mensagens (
+    id, tenant_id, chat_id, sender_id, sender_name, sender_role, content,
+    timestamp, editada, editada_em, usuario_id, "createdAt", "updatedAt"
+)
+SELECT 
+    gen_random_uuid(),
+    'tenant-001',
+    c.id,
+    u.id,
+    'Admin',
+    'ADMIN',
+    'Lembrem-se de atualizar os prontuários dos pacientes.',
+    '2024-01-15 08:05:00',
+    false,
+    NULL,
+    u.id,
+    NOW(),
+    NOW()
+FROM chats c, usuarios u 
+WHERE c.tenant_id = 'tenant-001' 
+  AND u.tenant_id = 'tenant-001' 
+  AND u.role = 'ADMIN'
+LIMIT 1;
+
+-- 26. INSERIR LEITURAS DE MENSAGENS
+INSERT INTO leituras_mensagens (
+    id, mensagem_id, user_id, tenant_id, status, lida_em, "chatParticipanteId",
+    "createdAt", "updatedAt"
+)
+SELECT 
+    gen_random_uuid(),
+    m.id,
+    u.id,
+    'tenant-001',
+    'LIDA',
+    '2024-01-15 08:01:00',
+    cp.id,
+    NOW(),
+    NOW()
+FROM mensagens m, usuarios u, chat_participantes cp
+WHERE m.tenant_id = 'tenant-001' 
+  AND u.tenant_id = 'tenant-001' 
+  AND cp.tenant_id = 'tenant-001'
+  AND u.role = 'ADMIN'
+LIMIT 1;
+
+-- 27. INSERIR ARQUIVOS DO CHAT
+INSERT INTO arquivos_chat (
+    id, tenant_id, chat_id, nome, nome_original, tipo, tamanho, url,
+    mime_type, uploadado_por, "createdAt", "updatedAt"
+)
+SELECT 
+    gen_random_uuid(),
+    'tenant-001',
+    c.id,
+    'protocolo-atendimento.pdf',
+    'protocolo-atendimento.pdf',
+    'DOCUMENTO',
+    1024000,
+    'https://exemplo.com/arquivos/protocolo.pdf',
+    'application/pdf',
+    u.id,
+    NOW(),
+    NOW()
+FROM chats c, usuarios u 
+WHERE c.tenant_id = 'tenant-001' 
+  AND u.tenant_id = 'tenant-001' 
+  AND u.role = 'ADMIN'
+LIMIT 1;
+
+-- 28. INSERIR RELACIONAMENTO ENTRE MENSAGEM E ARQUIVO
+INSERT INTO arquivos_mensagens (
+    id, mensagem_id, arquivo_id, "createdAt", "updatedAt"
+)
+SELECT 
+    gen_random_uuid(),
+    m.id,
+    ac.id,
+    NOW(),
+    NOW()
+FROM mensagens m, arquivos_chat ac
+WHERE m.tenant_id = 'tenant-001' 
+  AND ac.tenant_id = 'tenant-001'
+  AND m.content LIKE '%prontuários%'
+LIMIT 1;
+
+-- 29. INSERIR NOTIFICAÇÕES
+INSERT INTO notificacoes (
+    id, tenant_id, user_id, mensagem_id, titulo, corpo, tipo, lida,
+    enviada, enviada_em, "createdAt", "updatedAt"
+)
+SELECT 
+    gen_random_uuid(),
+    'tenant-001',
+    u.id,
+    m.id,
+    'Nova mensagem no chat',
+    'Admin enviou uma mensagem no chat geral',
+    'mensagem',
+    false,
+    true,
+    '2024-01-15 08:00:00',
+    NOW(),
+    NOW()
+FROM usuarios u, mensagens m
+WHERE u.tenant_id = 'tenant-001' 
+  AND m.tenant_id = 'tenant-001'
+  AND u.role = 'ADMIN'
+LIMIT 1;
+
+-- =====================================================
+-- MENSAGEM DE CONFIRMAÇÃO
+-- =====================================================
+
+-- Verificar se os dados foram inseridos corretamente
+SELECT 
+    'DADOS INSERIDOS COM SUCESSO!' as status,
+    COUNT(*) as total_clinicas,
+    (SELECT COUNT(*) FROM usuarios WHERE tenant_id = 'tenant-001') as total_usuarios,
+    (SELECT COUNT(*) FROM pacientes WHERE tenant_id = 'tenant-001') as total_pacientes,
+    (SELECT COUNT(*) FROM agendamentos WHERE tenant_id = 'tenant-001') as total_agendamentos,
+    (SELECT COUNT(*) FROM faturamentos WHERE tenant_id = 'tenant-001') as total_faturamentos,
+    (SELECT COUNT(*) FROM chats WHERE tenant_id = 'tenant-001') as total_chats
+FROM clinicas WHERE tenant_id = 'tenant-001';
+
+-- =====================================================
+-- DADOS DE ACESSO PARA TESTE
+-- =====================================================
+
+/*
+DADOS DE ACESSO PARA TESTE:
+
+Clínica: Clínica Exemplo
+Tenant ID: tenant-001
+
+Usuário Admin:
+- Email: admin@clinica.com
+- Senha: senha123
+- Role: ADMIN
+
+Profissional:
+- Nome: Dr. João Silva
+- Email: joao@clinica.com
+- CRM: CRM12345
+
+Paciente:
+- Nome: Maria Souza
+- CPF: 123.456.789-00
+- Email: maria@paciente.com
+
+Agendamentos:
+- Consulta: 15/01/2024 às 09:00 (CONFIRMADO)
+- Retorno: 20/01/2024 às 14:00 (AGENDADO)
+
+Faturamentos:
+- Consulta: R$ 150,00 (PENDENTE)
+- Retorno: R$ 100,00 (PAGO)
+
+Chat:
+- Nome: Chat Geral da Clínica
+- Tipo: GERAL
+- Mensagens: 2 mensagens de exemplo
+*/ 

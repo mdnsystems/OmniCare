@@ -1,0 +1,26 @@
+import { Request, Response } from 'express';
+declare const _default: {
+    create(req: Request, res: Response): Promise<void>;
+    findAll(req: Request, res: Response): Promise<void>;
+    findById(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+    update(req: Request, res: Response): Promise<void>;
+    delete(req: Request, res: Response): Promise<void>;
+    gerarRelatorioConsultas(req: Request, res: Response): Promise<void>;
+    gerarRelatorioFaturamento(req: Request, res: Response): Promise<void>;
+    gerarRelatorioDesempenho(req: Request, res: Response): Promise<void>;
+    gerarRelatorioReceitas(req: Request, res: Response): Promise<void>;
+    gerarRelatorioProfissionais(req: Request, res: Response): Promise<void>;
+    gerarRelatorioProntuarios(req: Request, res: Response): Promise<void>;
+    gerarRelatorioCustomizado(req: Request, res: Response): Promise<void>;
+    getTemplates(req: Request, res: Response): Promise<void>;
+    getTemplate(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+    createTemplate(req: Request, res: Response): Promise<void>;
+    updateTemplate(req: Request, res: Response): Promise<void>;
+    deleteTemplate(req: Request, res: Response): Promise<void>;
+    agendarRelatorio(req: Request, res: Response): Promise<void>;
+    getRelatoriosAgendados(req: Request, res: Response): Promise<void>;
+    updateRelatorioAgendado(req: Request, res: Response): Promise<void>;
+    deleteRelatorioAgendado(req: Request, res: Response): Promise<void>;
+    getHistorico(req: Request, res: Response): Promise<void>;
+};
+export default _default;

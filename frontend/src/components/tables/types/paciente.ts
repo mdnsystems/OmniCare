@@ -1,0 +1,1 @@
+export type { Paciente } from '@/types/api'; 

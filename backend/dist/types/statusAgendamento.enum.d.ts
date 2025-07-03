@@ -1,0 +1,8 @@
+export declare enum StatusAgendamento {
+    PENDENTE = "PENDENTE",
+    AGENDADO = "AGENDADO",
+    CONFIRMADO = "CONFIRMADO",
+    CANCELADO = "CANCELADO",
+    REALIZADO = "REALIZADO",
+    REMARCADO = "REMARCADO"
+}

@@ -1,0 +1,1 @@
+export type { Prontuario } from '@/types/api'; 

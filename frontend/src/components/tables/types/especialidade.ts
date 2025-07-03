@@ -1,0 +1,1 @@
+export type { Especialidade } from '@/types/api'; 

@@ -1,0 +1,828 @@
+// =============================================================================
+// SCHEMA PRISMA - OMNICARE v3.0 MULTITENANT
+// =============================================================================
+// 
+// Este schema implementa uma arquitetura multitenant completa para clínicas
+// com suporte a múltiplas especialidades, campos dinâmicos e templates
+// personalizáveis por tenant.
+//
+// Características principais:
+// - Isolamento completo por tenant_id
+// - Sistema de templates dinâmicos por especialidade
+// - Campos personalizáveis com 19 tipos diferentes
+// - Fluxos de trabalho configuráveis
+// - Módulos ativáveis por clínica
+// - Otimização para performance com índices estratégicos
+//
+// Autor: OmniCare Team
+// Versão: 3.0.0
+// Data: 2024
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// DOMÍNIO: CONFIGURAÇÃO E ADMINISTRAÇÃO
+// =============================================================================
+
+/// Configuração principal da clínica/tenant
+/// Contém todas as configurações específicas de cada tenant
+model Clinica {
+  id            String      @id @default(uuid())
+  tenantId      String      @unique @map("tenant_id") // Identificador único do tenant
+  nome          String
+  tipo          TipoClinica
+  logo          String?
+  corPrimaria   String      @default("#2563eb")
+  corSecundaria String      @default("#1e40af")
+  tema          String      @default("light")
+  ativo         Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relacionamentos
+  usuarios             Usuario[]
+  especialidades       Especialidade[]
+  templates            TemplateEspecialidade[]
+  fluxos               FluxoEspecialidade[]
+  camposPersonalizados CampoPersonalizado[]
+  relatorios           RelatorioEspecialidade[]
+  dashboards           DashboardEspecialidade[]
+  configuracaoWhatsApp ClinicaWhatsAppConfig?
+  Profissional         Profissional[]
+  Paciente             Paciente[]
+  Agendamento          Agendamento[]
+  Prontuario           Prontuario[]
+  Anamnese             Anamnese[]
+  Exame                Exame[]
+  Mensagem             Mensagem[]
+  faturas              FaturaClinica[]
+
+  @@index([tenantId])
+  @@index([tipo])
+  @@index([ativo])
+  @@map("clinicas")
+}
+
+/// Configuração do WhatsApp por clínica
+/// Integração com Z-API para envio de mensagens automáticas
+model ClinicaWhatsAppConfig {
+  id                       String   @id @default(uuid())
+  tenantId                 String   @unique @map("tenant_id")
+  zApiInstanceId           String   @map("z_api_instance_id")
+  zApiToken                String   @map("z_api_token")
+  numeroWhatsApp           String   @map("numero_whatsapp")
+  mensagensAtivas          Json     @map("mensagens_ativas") // { agendamento: boolean, lembrete: boolean, ... }
+  horarioEnvioLembrete     String   @map("horario_envio_lembrete")
+  diasAntecedenciaLembrete Int      @default(1) @map("dias_antecedencia_lembrete")
+  ativo                    Boolean  @default(true)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  // Relacionamentos
+  clinica           Clinica           @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  templatesMensagem MessageTemplate[]
+
+  @@map("clinica_whatsapp_config")
+}
+
+/// Templates de mensagens do WhatsApp
+model MessageTemplate {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  nome      String
+  tipo      String // agendamento, lembrete, confirmacao, cancelamento
+  template  String
+  variaveis String[] // Array de variáveis disponíveis no template
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  clinica ClinicaWhatsAppConfig @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tipo])
+  @@index([ativo])
+  @@map("message_templates")
+}
+
+// =============================================================================
+// DOMÍNIO: USUÁRIOS E AUTENTICAÇÃO
+// =============================================================================
+
+/// Usuários do sistema com isolamento por tenant
+/// Suporte a múltiplos perfis: ADMIN, PROFISSIONAL, RECEPCIONISTA
+model Usuario {
+  id             String      @id @default(uuid())
+  tenantId       String      @map("tenant_id")
+  email          String
+  senha          String
+  role           RoleUsuario
+  profissionalId String?     @map("profissional_id")
+  ativo          Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  // Relacionamentos
+  clinica      Clinica       @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  profissional Profissional? @relation(fields: [profissionalId], references: [id])
+  mensagens    Mensagem[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([email])
+  @@index([role])
+  @@index([ativo])
+  @@map("usuarios")
+}
+
+// =============================================================================
+// DOMÍNIO: ESPECIALIDADES E PROFISSIONAIS
+// =============================================================================
+
+/// Especialidades médicas por clínica
+/// Cada clínica pode ter suas próprias especialidades configuradas
+model Especialidade {
+  id            String      @id @default(uuid())
+  tenantId      String      @map("tenant_id")
+  nome          String
+  descricao     String
+  tipoClinica   TipoClinica @map("tipo_clinica")
+  configuracoes Json // Configurações específicas da especialidade
+  ativo         Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relacionamentos
+  clinica       Clinica        @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  profissionais Profissional[]
+
+  @@unique([tenantId, nome])
+  @@index([tenantId])
+  @@index([tipoClinica])
+  @@index([ativo])
+  @@map("especialidades")
+}
+
+/// Profissionais da clínica
+/// Médicos, nutricionistas, psicólogos, etc. com dados completos
+model Profissional {
+  id              String             @id @default(uuid())
+  tenantId        String             @map("tenant_id")
+  nome            String
+  especialidadeId String             @map("especialidade_id")
+  registro        String
+  crm             String?
+  email           String
+  telefone        String
+  sexo            String
+  dataNascimento  DateTime           @map("data_nascimento")
+  dataContratacao DateTime           @map("data_contratacao")
+  status          ProfissionalStatus
+  rua             String
+  numero          String
+  complemento     String?
+  bairro          String
+  cidade          String
+  estado          String             @db.Char(2)
+  cep             String
+  horarioInicio   String             @map("horario_inicio")
+  horarioFim      String             @map("horario_fim")
+  intervalo       String
+  diasTrabalho    String[]           @map("dias_trabalho")
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  // Relacionamentos
+  clinica       Clinica       @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  especialidade Especialidade @relation(fields: [especialidadeId], references: [id])
+  usuarios      Usuario[]
+  pacientes     Paciente[]
+  agendamentos  Agendamento[]
+  prontuarios   Prontuario[]
+  anamneses     Anamnese[]
+
+  @@unique([tenantId, email])
+  @@unique([tenantId, crm])
+  @@index([tenantId])
+  @@index([especialidadeId])
+  @@index([status])
+  @@index([email])
+  @@map("profissionais")
+}
+
+// =============================================================================
+// DOMÍNIO: PACIENTES
+// =============================================================================
+
+/// Pacientes da clínica com dados completos
+/// Suporte a campos personalizados por especialidade
+model Paciente {
+  id                   String    @id @default(uuid())
+  tenantId             String    @map("tenant_id")
+  nome                 String
+  dataNascimento       DateTime  @map("data_nascimento")
+  cpf                  String
+  telefone             String
+  email                String
+  endereco             String
+  numero               String
+  complemento          String?
+  bairro               String
+  cep                  String
+  cidade               String
+  estado               String    @db.Char(2)
+  pais                 String    @default("Brasil")
+  convenioNome         String?   @map("convenio_nome")
+  convenioNumero       String?   @map("convenio_numero")
+  convenioPlano        String?   @map("convenio_plano")
+  convenioValidade     DateTime? @map("convenio_validade")
+  profissionalId       String    @map("profissional_id")
+  camposPersonalizados Json?     @map("campos_personalizados") // Campos dinâmicos específicos
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  // Relacionamentos
+  clinica      Clinica       @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  profissional Profissional  @relation(fields: [profissionalId], references: [id])
+  agendamentos Agendamento[]
+  prontuarios  Prontuario[]
+  anamneses    Anamnese[]
+
+  @@unique([tenantId, cpf])
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([profissionalId])
+  @@index([cpf])
+  @@index([email])
+  @@index([nome])
+  @@map("pacientes")
+}
+
+// =============================================================================
+// DOMÍNIO: AGENDAMENTOS
+// =============================================================================
+
+/// Agendamentos de consultas e procedimentos
+/// Suporte a diferentes tipos por especialidade
+model Agendamento {
+  id                   String            @id @default(uuid())
+  tenantId             String            @map("tenant_id")
+  pacienteId           String            @map("paciente_id")
+  profissionalId       String            @map("profissional_id")
+  data                 DateTime
+  horaInicio           String            @map("hora_inicio")
+  horaFim              String            @map("hora_fim")
+  tipo                 TipoAgendamento
+  status               StatusAgendamento
+  observacoes          String?
+  camposPersonalizados Json?             @map("campos_personalizados") // Campos dinâmicos
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  // Relacionamentos
+  clinica      Clinica      @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  paciente     Paciente     @relation(fields: [pacienteId], references: [id])
+  profissional Profissional @relation(fields: [profissionalId], references: [id])
+
+  @@index([tenantId])
+  @@index([pacienteId])
+  @@index([profissionalId])
+  @@index([data])
+  @@index([status])
+  @@index([tipo])
+  @@index([tenantId, data]) // Índice composto para consultas por data
+  @@index([tenantId, profissionalId, data]) // Índice para agenda do profissional
+  @@map("agendamentos")
+}
+
+// =============================================================================
+// DOMÍNIO: PRONTUÁRIOS E ANAMNESES
+// =============================================================================
+
+/// Prontuários médicos com dados clínicos
+/// Base para histórico completo do paciente
+model Prontuario {
+  id                   String         @id @default(uuid())
+  tenantId             String         @map("tenant_id")
+  pacienteId           String         @map("paciente_id")
+  profissionalId       String         @map("profissional_id")
+  data                 DateTime
+  tipo                 TipoProntuario
+  descricao            String
+  diagnostico          String?
+  prescricao           String?
+  observacoes          String?
+  camposPersonalizados Json?          @map("campos_personalizados") // Campos dinâmicos
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  // Relacionamentos
+  clinica      Clinica      @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  paciente     Paciente     @relation(fields: [pacienteId], references: [id])
+  profissional Profissional @relation(fields: [profissionalId], references: [id])
+  anamnese     Anamnese?
+  exames       Exame[]
+
+  @@index([tenantId])
+  @@index([pacienteId])
+  @@index([profissionalId])
+  @@index([data])
+  @@index([tipo])
+  @@index([tenantId, pacienteId]) // Índice para histórico do paciente
+  @@map("prontuarios")
+}
+
+/// Anamneses baseadas em templates dinâmicos
+/// Dados específicos por especialidade com campos customizáveis
+model Anamnese {
+  id             String   @id @default(uuid())
+  tenantId       String   @map("tenant_id")
+  pacienteId     String   @map("paciente_id")
+  profissionalId String   @map("profissional_id")
+  prontuarioId   String   @unique @map("prontuario_id")
+  data           DateTime
+  templateId     String   @map("template_id")
+  campos         Json // Dados dos campos dinâmicos
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relacionamentos
+  clinica      Clinica      @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  paciente     Paciente     @relation(fields: [pacienteId], references: [id])
+  profissional Profissional @relation(fields: [profissionalId], references: [id])
+  prontuario   Prontuario   @relation(fields: [prontuarioId], references: [id])
+
+  @@index([tenantId])
+  @@index([pacienteId])
+  @@index([profissionalId])
+  @@index([templateId])
+  @@index([data])
+  @@map("anamneses")
+}
+
+/// Exames e documentos anexados aos prontuários
+/// Suporte a múltiplos arquivos por exame
+model Exame {
+  id           String   @id @default(uuid())
+  tenantId     String   @map("tenant_id")
+  prontuarioId String   @map("prontuario_id")
+  tipo         String
+  data         DateTime
+  resultado    String
+  observacoes  String?
+  arquivos     Json // Array de arquivos anexados
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relacionamentos
+  clinica    Clinica    @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  prontuario Prontuario @relation(fields: [prontuarioId], references: [id])
+
+  @@index([tenantId])
+  @@index([prontuarioId])
+  @@index([tipo])
+  @@index([data])
+  @@map("exames")
+}
+
+// =============================================================================
+// DOMÍNIO: TEMPLATES E CAMPOS DINÂMICOS
+// =============================================================================
+
+/// Templates de formulários por especialidade
+/// Define a estrutura de campos para anamneses e prontuários
+model TemplateEspecialidade {
+  id          String         @id @default(uuid())
+  tenantId    String         @map("tenant_id")
+  nome        String
+  descricao   String
+  tipoClinica TipoClinica    @map("tipo_clinica")
+  categoria   CategoriaCampo
+  campos      Json // Array de campos do template
+  validacoes  Json // Regras de validação
+  ativo       Boolean        @default(true)
+  ordem       Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  // Relacionamentos
+  clinica Clinica @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+
+  @@unique([tenantId, nome])
+  @@index([tenantId])
+  @@index([tipoClinica])
+  @@index([categoria])
+  @@index([ativo])
+  @@map("template_especialidades")
+}
+
+/// Campos personalizados por clínica
+/// Permite criação de campos específicos além dos templates
+model CampoPersonalizado {
+  id           String         @id @default(uuid())
+  tenantId     String         @map("tenant_id")
+  nome         String
+  tipo         TipoCampo
+  categoria    CategoriaCampo
+  obrigatorio  Boolean        @default(false)
+  opcoes       String[] // Para campos SELECT/MULTISELECT
+  valorPadrao  String?        @map("valor_padrao")
+  validacoes   Json // Regras de validação
+  dependencias String[] // Campos dos quais depende
+  ordem        Int            @default(0)
+  ativo        Boolean        @default(true)
+  templateId   String?        @map("template_id")
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  // Relacionamentos
+  clinica Clinica @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+
+  @@unique([tenantId, nome])
+  @@index([tenantId])
+  @@index([categoria])
+  @@index([tipo])
+  @@index([ativo])
+  @@map("campos_personalizados")
+}
+
+// =============================================================================
+// DOMÍNIO: FLUXOS DE TRABALHO
+// =============================================================================
+
+/// Fluxos de trabalho por especialidade
+/// Define etapas e ações automáticas para processos clínicos
+model FluxoEspecialidade {
+  id          String      @id @default(uuid())
+  tenantId    String      @map("tenant_id")
+  nome        String
+  descricao   String
+  tipoClinica TipoClinica @map("tipo_clinica")
+  etapas      Json // Array de etapas do fluxo
+  validacoes  Json // Regras de validação do fluxo
+  ativo       Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relacionamentos
+  clinica Clinica @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+
+  @@unique([tenantId, nome])
+  @@index([tenantId])
+  @@index([tipoClinica])
+  @@index([ativo])
+  @@map("fluxos_especialidades")
+}
+
+// =============================================================================
+// DOMÍNIO: RELATÓRIOS E DASHBOARDS
+// =============================================================================
+
+/// Relatórios específicos por especialidade
+/// Templates de relatórios com parâmetros configuráveis
+model RelatorioEspecialidade {
+  id          String      @id @default(uuid())
+  tenantId    String      @map("tenant_id")
+  nome        String
+  descricao   String
+  tipoClinica TipoClinica @map("tipo_clinica")
+  tipo        String // consultas, faturamento, desempenho, pacientes, customizado
+  parametros  Json // Parâmetros configuráveis do relatório
+  template    String // Template do relatório
+  ativo       Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relacionamentos
+  clinica Clinica @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+
+  @@unique([tenantId, nome])
+  @@index([tenantId])
+  @@index([tipoClinica])
+  @@index([tipo])
+  @@index([ativo])
+  @@map("relatorios_especialidades")
+}
+
+/// Dashboards personalizados por especialidade
+/// Widgets e layouts específicos para cada tipo de clínica
+model DashboardEspecialidade {
+  id          String      @id @default(uuid())
+  tenantId    String      @map("tenant_id")
+  nome        String
+  descricao   String
+  tipoClinica TipoClinica @map("tipo_clinica")
+  widgets     Json // Array de widgets do dashboard
+  layout      Json // Layout e posicionamento dos widgets
+  ativo       Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relacionamentos
+  clinica Clinica @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+
+  @@unique([tenantId, nome])
+  @@index([tenantId])
+  @@index([tipoClinica])
+  @@index([ativo])
+  @@map("dashboards_especialidades")
+}
+
+// =============================================================================
+// DOMÍNIO: COMUNICAÇÃO
+// =============================================================================
+
+/// Mensagens do sistema (chat interno)
+/// Comunicação entre usuários da mesma clínica
+model Mensagem {
+  id         String      @id @default(uuid())
+  tenantId   String      @map("tenant_id")
+  senderId   String      @map("sender_id")
+  senderName String      @map("sender_name")
+  senderRole RoleUsuario @map("sender_role")
+  content    String
+  timestamp  DateTime    @default(now())
+
+  // Relacionamentos
+  clinica Clinica @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  sender  Usuario @relation(fields: [senderId], references: [id])
+
+  @@index([tenantId])
+  @@index([senderId])
+  @@index([timestamp])
+  @@index([tenantId, timestamp]) // Índice para histórico de mensagens
+  @@map("mensagens")
+}
+
+// =============================================================================
+// DOMÍNIO: CONTROLE FINANCEIRO MANUAL
+// =============================================================================
+
+/// Faturas das clínicas para controle manual
+/// Sistema de cobrança manual para o perfil SUPER_ADMIN
+model FaturaClinica {
+  id             String        @id @default(uuid())
+  tenantId       String        @map("tenant_id")
+  numeroFatura   String        @unique @map("numero_fatura")
+  valor          Decimal       @db.Decimal(10, 2)
+  dataVencimento DateTime      @map("data_vencimento")
+  dataPagamento  DateTime?     @map("data_pagamento")
+  status         StatusFatura  @default(PENDENTE)
+  diasAtraso     Int           @default(0) @map("dias_atraso")
+  nivelBloqueio  NivelBloqueio @default(SEM_BLOQUEIO) @map("nivel_bloqueio")
+  observacoes    String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  // Relacionamentos
+  clinica           Clinica             @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  pagamentos        PagamentoClinica[]
+  lembretes         LembreteClinica[]
+  historicoBloqueio HistoricoBloqueio[]
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([dataVencimento])
+  @@index([diasAtraso])
+  @@index([nivelBloqueio])
+  @@map("faturas_clinica")
+}
+
+/// Pagamentos das faturas das clínicas
+model PagamentoClinica {
+  id             String                @id @default(uuid())
+  faturaId       String                @map("fatura_id")
+  valor          Decimal               @db.Decimal(10, 2)
+  formaPagamento FormaPagamentoClinica @map("forma_pagamento")
+  dataPagamento  DateTime              @map("data_pagamento")
+  comprovante    String?
+  observacoes    String?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  // Relacionamentos
+  fatura FaturaClinica @relation(fields: [faturaId], references: [id], onDelete: Cascade)
+
+  @@index([faturaId])
+  @@index([dataPagamento])
+  @@map("pagamentos_clinica")
+}
+
+/// Lembretes enviados para as clínicas
+model LembreteClinica {
+  id           String         @id @default(uuid())
+  faturaId     String         @map("fatura_id")
+  tipo         TipoLembrete
+  mensagem     String
+  dataEnvio    DateTime       @default(now()) @map("data_envio")
+  status       StatusLembrete @default(ENVIADO) @map("status_envio")
+  destinatario String // Email do administrador da clínica
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  // Relacionamentos
+  fatura FaturaClinica @relation(fields: [faturaId], references: [id], onDelete: Cascade)
+
+  @@index([faturaId])
+  @@index([tipo])
+  @@index([dataEnvio])
+  @@map("lembretes_clinica")
+}
+
+/// Histórico de bloqueios aplicados às clínicas
+model HistoricoBloqueio {
+  id            String        @id @default(uuid())
+  faturaId      String        @map("fatura_id")
+  nivelAnterior NivelBloqueio @map("nivel_anterior")
+  nivelNovo     NivelBloqueio @map("nivel_novo")
+  motivo        String
+  aplicadoPor   String        @map("aplicado_por") // ID do SUPER_ADMIN
+  dataAplicacao DateTime      @default(now()) @map("data_aplicacao")
+  createdAt     DateTime      @default(now())
+
+  // Relacionamentos
+  fatura FaturaClinica @relation(fields: [faturaId], references: [id], onDelete: Cascade)
+
+  @@index([faturaId])
+  @@index([dataAplicacao])
+  @@map("historico_bloqueios")
+}
+
+// =============================================================================
+// ENUMS E TIPOS
+// =============================================================================
+
+/// Tipos de clínica suportados pelo sistema
+enum TipoClinica {
+  MEDICA
+  ODONTOLOGICA
+  NUTRICIONAL
+  PSICOLOGICA
+  FISIOTERAPICA
+  ESTETICA
+  VETERINARIA
+  EDUCACIONAL
+  CORPORATIVA
+  PERSONALIZADA
+}
+
+/// Status do profissional
+enum ProfissionalStatus {
+  ATIVO
+  INATIVO
+  FERIAS
+  LICENCA
+}
+
+/// Tipos de agendamento por especialidade
+enum TipoAgendamento {
+  // Tipos gerais
+  CONSULTA
+  RETORNO
+  EXAME
+
+  // Psicologia
+  SESSAO_TERAPIA
+  AVALIACAO_PSICOLOGICA
+
+  // Fisioterapia
+  AVALIACAO_FISICA
+  SESSAO_FISIOTERAPIA
+
+  // Odontologia
+  PROCEDIMENTO_ODONTOLOGICO
+  LIMPEZA
+  EXTRACAO
+
+  // Estética
+  PROCEDIMENTO_ESTETICO
+  CONSULTA_ESTETICA
+
+  // Veterinária
+  VACINA
+  CIRURGIA
+  CONSULTA_VETERINARIA
+}
+
+/// Status do agendamento
+enum StatusAgendamento {
+  AGENDADO
+  CONFIRMADO
+  CANCELADO
+  REALIZADO
+  REMARCADO
+}
+
+/// Tipos de prontuário
+enum TipoProntuario {
+  // Tipos gerais
+  CONSULTA
+  RETORNO
+  EXAME
+  PROCEDIMENTO
+  DOCUMENTO
+
+  // Específicos por especialidade
+  AVALIACAO
+  SESSAO
+  RELATORIO
+  EVOLUCAO
+  PRESCRICAO
+}
+
+/// Tipos de campo dinâmicos suportados
+enum TipoCampo {
+  TEXTO
+  NUMERO
+  DATA
+  SELECT
+  MULTISELECT
+  TEXTAREA
+  BOOLEANO
+  EMAIL
+  TELEFONE
+  CEP
+  CPF
+  CNPJ
+  MOEDA
+  PERCENTUAL
+  COR
+  ARQUIVO
+  IMAGEM
+  ASSINATURA
+  GEOLOCALIZACAO
+}
+
+/// Categorias de campos para organização
+enum CategoriaCampo {
+  PACIENTE
+  PROFISSIONAL
+  ANAMNESE
+  PRONTUARIO
+  AGENDAMENTO
+  FINANCEIRO
+  RELATORIO
+}
+
+/// Perfis de usuário do sistema
+enum RoleUsuario {
+  SUPER_ADMIN
+  ADMIN
+  PROFISSIONAL
+  RECEPCIONISTA
+}
+
+/// Status das faturas das clínicas
+enum StatusFatura {
+  PENDENTE
+  PAGO
+  PARCIAL
+  VENCIDO
+  CANCELADO
+}
+
+/// Níveis de bloqueio aplicados às clínicas
+enum NivelBloqueio {
+  SEM_BLOQUEIO
+  NOTIFICACAO
+  AVISO_TOPO
+  RESTRICAO_FUNCIONALIDADES
+  BLOQUEIO_TOTAL
+}
+
+/// Formas de pagamento das clínicas
+enum FormaPagamentoClinica {
+  PIX
+  BOLETO
+  CARTAO_CREDITO
+  CARTAO_DEBITO
+  TRANSFERENCIA
+  DINHEIRO
+}
+
+/// Tipos de lembrete enviados
+enum TipoLembrete {
+  NOTIFICACAO_3_DIAS
+  AVISO_5_DIAS
+  RESTRICAO_7_DIAS
+  BLOQUEIO_10_DIAS
+  PERSONALIZADO
+}
+
+/// Status dos lembretes enviados
+enum StatusLembrete {
+  ENVIADO
+  ENTREGUE
+  LIDO
+  FALHA
+}
