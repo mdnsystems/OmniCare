@@ -66,19 +66,22 @@ export function AgendamentoNotifications({
             {agendamentosAtrasados.map((agendamento) => (
               <div
                 key={agendamento.id}
-                className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800"
+                className="flex items-center justify-between p-3 bg-card border border-border rounded-lg hover:shadow-md transition-shadow"
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <User className="h-4 w-4 text-red-600" />
-                    <span className="font-medium text-red-800 dark:text-red-200">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium text-card-foreground">
                       {agendamento.paciente?.nome}
                     </span>
                     <Badge className={getTipoColor(agendamento.tipo)}>
                       {agendamento.tipo}
                     </Badge>
+                    <Badge variant="outline" className="text-red-600 border-red-200 dark:text-red-400 dark:border-red-800">
+                      Atrasado
+                    </Badge>
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-red-700 dark:text-red-300">
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       {format(parseISO(agendamento.data), "dd/MM/yyyy", { locale: ptBR })}
@@ -98,7 +101,7 @@ export function AgendamentoNotifications({
                     size="sm"
                     variant="outline"
                     onClick={() => onEnviarLembrete(agendamento)}
-                    className="text-red-600 border-red-300 hover:bg-red-100"
+                    className="border-border hover:bg-muted"
                   >
                     Lembrete
                   </Button>
@@ -106,7 +109,7 @@ export function AgendamentoNotifications({
                     size="sm"
                     variant="outline"
                     onClick={() => onCancelar(agendamento)}
-                    className="text-red-600 border-red-300 hover:bg-red-100"
+                    className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-950/20"
                   >
                     Cancelar
                   </Button>
@@ -128,19 +131,22 @@ export function AgendamentoNotifications({
             {agendamentosProximos.map((agendamento) => (
               <div
                 key={agendamento.id}
-                className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-950/30 rounded-lg border border-orange-200 dark:border-orange-800"
+                className="flex items-center justify-between p-3 bg-card border border-border rounded-lg hover:shadow-md transition-shadow"
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <User className="h-4 w-4 text-orange-600" />
-                    <span className="font-medium text-orange-800 dark:text-orange-200">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium text-card-foreground">
                       {agendamento.paciente?.nome}
                     </span>
                     <Badge className={getTipoColor(agendamento.tipo)}>
                       {agendamento.tipo}
                     </Badge>
+                    <Badge variant="outline" className="text-orange-600 border-orange-200 dark:text-orange-400 dark:border-orange-800">
+                      Próximo
+                    </Badge>
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-orange-700 dark:text-orange-300">
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       {format(parseISO(agendamento.data), "dd/MM/yyyy", { locale: ptBR })}
@@ -167,7 +173,7 @@ export function AgendamentoNotifications({
                     size="sm"
                     variant="outline"
                     onClick={() => onEnviarLembrete(agendamento)}
-                    className="text-orange-600 border-orange-300 hover:bg-orange-100"
+                    className="border-border hover:bg-muted"
                   >
                     Lembrete
                   </Button>

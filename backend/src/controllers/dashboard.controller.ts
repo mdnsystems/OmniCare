@@ -160,5 +160,23 @@ export default {
         timestamp: new Date().toISOString(),
       });
     }
+  },
+
+  async getEvolucaoSemanal(req: Request, res: Response) {
+    try {
+      const { tenantId } = req as any;
+      const evolucao = await dashboardService.getEvolucaoSemanal(tenantId);
+      res.json({
+        success: true,
+        data: evolucao,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
   }
 }; 

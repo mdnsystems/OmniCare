@@ -17,7 +17,7 @@ import {
   FileText
 } from "lucide-react"
 import { DataTable } from "./components/data-table"
-import { columns } from "./components/columns"
+import { columns } from "./components/pagamentos-columns"
 import { Pagamento, FormaPagamento } from "@/types/api"
 import { usePagamentos } from "@/hooks/useFinanceiro"
 import { formatCurrency } from "@/lib/utils"
@@ -162,4 +162,6 @@ export function PagamentosTable() {
       </Card>
     </div>
   );
-} 
+}
+
+export default PagamentosTable; 

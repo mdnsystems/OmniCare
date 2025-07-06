@@ -435,5 +435,72 @@ export default {
       receitaSemana,
       taxaSucesso: agendamentosSemana > 0 ? (agendamentosRealizadosSemana / agendamentosSemana) * 100 : 0
     };
+  },
+
+  async getEvolucaoSemanal(tenantId: string) {
+    const hoje = new Date();
+    const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const dias: { dia: string, data: Date }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const data = new Date(hoje);
+      data.setDate(hoje.getDate() - i);
+      dias.push({
+        dia: diasSemana[data.getDay()],
+        data: new Date(data.getFullYear(), data.getMonth(), data.getDate())
+      });
+    }
+
+    const result = await Promise.all(dias.map(async ({ dia, data }) => {
+      const inicio = new Date(data);
+      const fim = new Date(data);
+      fim.setDate(fim.getDate() + 1);
+
+      const agendamentos = await prisma.agendamento.count({
+        where: {
+          tenantId,
+          data: {
+            gte: inicio,
+            lt: fim
+          }
+        }
+      });
+      const realizados = await prisma.agendamento.count({
+        where: {
+          tenantId,
+          status: StatusAgendamento.REALIZADO,
+          data: {
+            gte: inicio,
+            lt: fim
+          }
+        }
+      });
+      const prontuarios = await prisma.prontuario.count({
+        where: {
+          tenantId,
+          createdAt: {
+            gte: inicio,
+            lt: fim
+          }
+        }
+      });
+      const faturamentos = await prisma.faturamento.findMany({
+        where: {
+          tenantId,
+          createdAt: {
+            gte: inicio,
+            lt: fim
+          }
+        }
+      });
+      const receita = faturamentos.reduce((acc, fat) => acc + Number(fat.valorFinal), 0);
+      return {
+        dia,
+        agendamentos,
+        realizados,
+        receita,
+        prontuarios
+      };
+    }));
+    return result;
   }
 }; 

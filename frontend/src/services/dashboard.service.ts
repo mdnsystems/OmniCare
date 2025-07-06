@@ -99,6 +99,14 @@ export interface EstatisticasAtividades {
   taxaSucesso: number;
 }
 
+export interface EvolucaoSemanalData {
+  dia: string;
+  agendamentos: number;
+  realizados: number;
+  receita: number;
+  prontuarios: number;
+}
+
 // Dashboard geral
 export const getDashboard = async (): Promise<DashboardData> => {
   try {
@@ -197,6 +205,16 @@ export const getEstatisticasAnamnese = async (periodo?: { inicio: string; fim: s
 export const getEstatisticasAtividades = async (): Promise<EstatisticasAtividades> => {
   try {
     const response = await api.get('/dashboard/atividades');
+    return extractData(response);
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
+
+// Evolução semanal
+export const getEvolucaoSemanal = async (): Promise<EvolucaoSemanalData[]> => {
+  try {
+    const response = await api.get('/dashboard/evolucao-semanal');
     return extractData(response);
   } catch (error) {
     throw handleApiError(error);

@@ -57,4 +57,10 @@ router.get('/atividades',
   dashboardController.getEstatisticasAtividades
 );
 
+// Evolução semanal
+router.get('/evolucao-semanal',
+  AuthorizationMiddleware.requireAnyRole([RoleUsuario.ADMIN, RoleUsuario.PROFISSIONAL, RoleUsuario.RECEPCIONISTA]),
+  dashboardController.getEvolucaoSemanal
+);
+
 export default router; 

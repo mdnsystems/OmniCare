@@ -7,7 +7,8 @@ import {
   getEstatisticasProfissionais,
   getEstatisticasProntuarios,
   getEstatisticasAnamnese,
-  getEstatisticasAtividades
+  getEstatisticasAtividades,
+  getEvolucaoSemanal
 } from '../services/dashboard.service';
 
 // Hook para dashboard geral
@@ -91,5 +92,15 @@ export const useEstatisticasAtividades = () => {
     queryFn: getEstatisticasAtividades,
     staleTime: 2 * 60 * 1000, // 2 minutos
     refetchInterval: 2 * 60 * 1000,
+  });
+};
+
+// Hook para evolução semanal
+export const useEvolucaoSemanal = () => {
+  return useQuery({
+    queryKey: ['dashboard', 'evolucao-semanal'],
+    queryFn: getEvolucaoSemanal,
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    refetchInterval: 5 * 60 * 1000,
   });
 }; 

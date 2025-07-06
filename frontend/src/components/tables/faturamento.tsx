@@ -17,7 +17,7 @@ import {
   FileText
 } from "lucide-react"
 import { DataTable } from "./components/data-table"
-import { columns } from "./components/columns"
+import { columns } from "./components/faturamento-columns"
 import { Faturamento, TipoFaturamento, FormaPagamento, StatusFaturamento } from "@/types/api"
 import { useFaturamentos } from "@/hooks/useFinanceiro"
 import { formatCurrency } from "@/lib/utils"
@@ -175,4 +175,6 @@ export function FaturamentoTable() {
       </Card>
     </div>
   );
-} 
+}
+
+export default FaturamentoTable; 

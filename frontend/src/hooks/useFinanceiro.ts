@@ -31,6 +31,53 @@ interface UseFinanceiroOptions {
   formaPagamento?: FormaPagamento
 }
 
+// Hook para buscar faturamentos
+export function useFaturamentos(options: UseFinanceiroOptions = {}) {
+  const { data, isLoading, error } = useQuery<Faturamento[]>({
+    queryKey: ['faturamentos', options],
+    queryFn: async () => {
+      const params = new URLSearchParams()
+      if (options.periodoInicio) params.append('periodoInicio', options.periodoInicio)
+      if (options.periodoFim) params.append('periodoFim', options.periodoFim)
+      if (options.status) params.append('status', options.status)
+      if (options.tipo) params.append('tipo', options.tipo)
+
+      const response = await api.get(`/faturamento?${params.toString()}`)
+      return response.data
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutos
+  })
+
+  return {
+    data: data || [],
+    isLoading,
+    error: error?.message
+  }
+}
+
+// Hook para buscar pagamentos
+export function usePagamentos(options: UseFinanceiroOptions = {}) {
+  const { data, isLoading, error } = useQuery<Pagamento[]>({
+    queryKey: ['pagamentos', options],
+    queryFn: async () => {
+      const params = new URLSearchParams()
+      if (options.periodoInicio) params.append('periodoInicio', options.periodoInicio)
+      if (options.periodoFim) params.append('periodoFim', options.periodoFim)
+      if (options.formaPagamento) params.append('formaPagamento', options.formaPagamento)
+
+      const response = await api.get(`/pagamento?${params.toString()}`)
+      return response.data
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutos
+  })
+
+  return {
+    data: data || [],
+    isLoading,
+    error: error?.message
+  }
+}
+
 export function useFinanceiro(options: UseFinanceiroOptions = {}) {
   const queryClient = useQueryClient()
   const [loading, setLoading] = useState(false)

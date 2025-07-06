@@ -20,11 +20,13 @@ import {
   LineChart
 } from "lucide-react"
 import { useClinica } from "@/contexts/ClinicaContext"
-import { useEstatisticasAtividades } from "@/hooks/useDashboard"
+import { useEstatisticasAtividades, useEvolucaoSemanal } from "@/hooks/useDashboard"
+import { EvolucaoSemanalChart, EvolucaoReceitaChart } from "@/components/charts/EvolucaoSemanalChart"
 
 export function DashboardAtividades() {
   const { getNomenclatura } = useClinica()
   const { data: metricasAtividades, isLoading, error } = useEstatisticasAtividades();
+  const { data: evolucaoSemanal, isLoading: isLoadingEvolucao } = useEvolucaoSemanal();
   const [activeTab, setActiveTab] = useState("hoje")
 
   if (isLoading) {
@@ -253,28 +255,35 @@ export function DashboardAtividades() {
             <CardTitle>Evolução Semanal</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-64 flex items-center justify-center text-muted-foreground">
-              <div className="text-center">
-                <BarChart3 className="h-12 w-12 mx-auto mb-2" />
-                <p>Gráfico de Evolução Semanal</p>
-                <p className="text-sm">Dados de exemplo para demonstração</p>
+            {isLoadingEvolucao ? (
+              <div className="h-64 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
-            </div>
+            ) : (
+              <EvolucaoSemanalChart 
+                tipo="line" 
+                altura={250} 
+                data={evolucaoSemanal}
+              />
+            )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Distribuição de Atividades</CardTitle>
+            <CardTitle>Evolução da Receita</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-64 flex items-center justify-center text-muted-foreground">
-              <div className="text-center">
-                <LineChart className="h-12 w-12 mx-auto mb-2" />
-                <p>Gráfico de Distribuição</p>
-                <p className="text-sm">Dados de exemplo para demonstração</p>
+            {isLoadingEvolucao ? (
+              <div className="h-64 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
-            </div>
+            ) : (
+              <EvolucaoReceitaChart 
+                altura={250} 
+                data={evolucaoSemanal}
+              />
+            )}
           </CardContent>
         </Card>
       </div>

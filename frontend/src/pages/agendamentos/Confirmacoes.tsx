@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Toggle } from "@/components/ui/toggle";
 import { useConfirmacoes } from "@/hooks/useConfirmacoes";
 import { useWhatsAppMessages } from "@/hooks/useWhatsAppMessages";
 import { AgendamentoNotifications } from "@/components/agendamento-notifications";
@@ -25,9 +26,8 @@ import {
   RefreshCw,
   Bell,
   Loader2,
-  MessageCircle,
-  IdCard
 } from "lucide-react";
+import { FaWhatsapp } from "react-icons/fa6";
 import { format, parseISO, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Agendamento, StatusAgendamento, TipoAgendamento } from "@/types/api";
@@ -168,7 +168,7 @@ export function Confirmacoes() {
       
       // Enviar mensagem de cancelamento via WhatsApp se habilitado
       if (useWhatsApp && agendamento.paciente && agendamento.profissional) {
-        await sendCancelamentoMessage({
+        sendCancelamentoMessage.mutate({
           agendamentoId: agendamento.id,
           pacienteId: agendamento.pacienteId,
           profissionalId: agendamento.profissionalId,
@@ -191,7 +191,7 @@ export function Confirmacoes() {
     try {
       if (useWhatsApp && selectedAgendamento.paciente && selectedAgendamento.profissional) {
         // Enviar via WhatsApp
-        await sendLembreteMessage({
+        sendLembreteMessage.mutate({
           agendamentoId: selectedAgendamento.id,
           pacienteId: selectedAgendamento.pacienteId,
           profissionalId: selectedAgendamento.profissionalId,
@@ -426,7 +426,7 @@ export function Confirmacoes() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Status</label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Todos os status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -442,7 +442,7 @@ export function Confirmacoes() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Tipo</label>
               <Select value={tipoFilter} onValueChange={setTipoFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Todos os tipos" />
                 </SelectTrigger>
                 <SelectContent>
@@ -457,14 +457,15 @@ export function Confirmacoes() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Comunicação</label>
               <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="useWhatsApp"
-                  checked={useWhatsApp}
-                  onChange={(e) => setUseWhatsApp(e.target.checked)}
-                  className="rounded border-gray-300"
-                />
-                <label htmlFor="useWhatsApp" className="text-sm">
+                <Toggle
+                  pressed={useWhatsApp}
+                  onPressedChange={setUseWhatsApp}
+                  aria-label="Usar WhatsApp"
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-600 data-[state=on]:bg-green-600 data-[state=on]:hover:bg-green-700 data-[state=on]:text-white"
+                >
+                  <FaWhatsapp className="h-4 w-4" />
+                </Toggle>
+                <label className="text-sm">
                   Usar WhatsApp
                 </label>
               </div>
@@ -561,12 +562,12 @@ export function Confirmacoes() {
                             {agendamento.tipo}
                           </Badge>
                           {isAgendamentoProximo(agendamento.data) && (
-                            <Badge variant="outline" className="text-orange-600 border-orange-200">
+                            <Badge variant="outline" className="text-orange-600 border-orange-200 dark:text-orange-400 dark:border-orange-800">
                               Próximo
                             </Badge>
                           )}
                           {isAgendamentoAtrasado(agendamento.data) && (
-                            <Badge variant="outline" className="text-red-600 border-red-200">
+                            <Badge variant="outline" className="text-red-600 border-red-200 dark:text-red-400 dark:border-red-800">
                               Atrasado
                             </Badge>
                           )}
