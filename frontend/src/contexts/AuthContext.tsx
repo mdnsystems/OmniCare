@@ -66,7 +66,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       console.log('🔐 [AuthContext] Iniciando login para:', email);
       
-      const response = await api.post('/auth/login', { email, senha: password });
+      // Usar o tenant correto onde estão os dados de teste
+      const tenantId = 'tenant-001';
+      
+      const response = await api.post('/auth/login', { 
+        email, 
+        senha: password,
+        tenantId 
+      });
       
       // Usar extractData para extrair os dados corretamente
       const { usuario, expiresIn, refreshExpiresIn } = extractData(response);

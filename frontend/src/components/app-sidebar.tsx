@@ -21,7 +21,7 @@ import { useChatNotifications } from "@/hooks/useChatNotifications"
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { isModuleActive, getNomenclatura } = useClinica()
   const { user } = useAuth()
-  const { notification } = useChatNotifications()
+  const { unreadCount } = useChatNotifications()
 
   // Memoizar as nomenclaturas para evitar recálculos desnecessários
   const nomenclaturas = React.useMemo(() => ({
@@ -240,7 +240,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Chat",
           url: "/chat",
           icon: MessageSquare,
-          badge: notification.hasUnreadMessages ? notification.unreadCount : undefined,
+          badge: unreadCount > 0 ? unreadCount : undefined,
           items: [
             { title: "Conversas", url: "/chat" }
           ],
@@ -315,7 +315,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Chat",
           url: "/chat",
           icon: MessageSquare,
-          badge: notification.hasUnreadMessages ? notification.unreadCount : undefined,
+          badge: unreadCount > 0 ? unreadCount : undefined,
           items: [
             { title: "Conversas", url: "/chat" }
           ],
@@ -375,7 +375,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Chat",
           url: "/chat",
           icon: MessageSquare,
-          badge: notification.hasUnreadMessages ? notification.unreadCount : undefined,
+          badge: unreadCount > 0 ? unreadCount : undefined,
           items: [
             { title: "Conversas", url: "/chat" }
           ],
@@ -396,7 +396,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
 
     return baseItems
-  }, [nomenclaturas, isModuleActive, notification])
+  }, [nomenclaturas, isModuleActive, unreadCount])
 
   // Menu dinâmico baseado na role do usuário - memoizado para evitar re-renderizações
   const data = React.useMemo(() => {

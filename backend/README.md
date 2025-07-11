@@ -68,21 +68,65 @@ swift-med-api/
 
 ## 📋 Pré-requisitos
 
+### Opção 1: Desenvolvimento Local
 - Node.js 18+
 - PostgreSQL 14+
 - npm ou yarn
 
+### Opção 2: Docker (Recomendado)
+- Docker Desktop 20.10+
+- Docker Compose 2.0+
+- Git
+
 ## 🚀 Instalação e Configuração
 
-### 1. Clone o repositório
+### Opção 1: Docker (Recomendado)
 
+#### 1. Clone o repositório
 ```bash
 git clone <repository-url>
-cd swift-med-api
+cd backend
 ```
 
-### 2. Instale as dependências
+#### 2. Setup automático
+```bash
+# Para desenvolvimento (recomendado para novos desenvolvedores)
+make setup-dev
 
+# Para produção
+make setup
+```
+
+#### 3. Verificar funcionamento
+```bash
+# Verificar saúde dos serviços
+make health
+
+# Ver logs
+make logs
+```
+
+**🎯 Comandos úteis:**
+```bash
+make up-dev          # Iniciar desenvolvimento
+make down            # Parar serviços
+make logs            # Ver logs
+make shell           # Acessar container
+make migrate         # Executar migrações
+make seed            # Executar seed
+```
+
+**📚 Documentação Docker:** [README-Docker.md](./README-Docker.md) | [DOCKER.md](./DOCKER.md)
+
+### Opção 2: Desenvolvimento Local
+
+#### 1. Clone o repositório
+```bash
+git clone <repository-url>
+cd backend
+```
+
+#### 2. Instale as dependências
 ```bash
 npm install
 ```

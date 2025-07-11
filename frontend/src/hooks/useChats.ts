@@ -26,7 +26,11 @@ export const useChats = (params: ChatParams = {}) => {
   
   return useQuery({
     queryKey: createQueryKey('chats', { page, limit, sortBy, sortOrder, ...filters }),
-    queryFn: () => chatService.getChats({ page, limit, sortBy, sortOrder, filters }),
+    queryFn: () => chatService.getChats({ 
+      ...filters,
+      page, 
+      limit 
+    }),
     staleTime: 5 * 60 * 1000, // 5 minutos
     gcTime: 10 * 60 * 1000, // 10 minutos
   });
@@ -35,7 +39,7 @@ export const useChats = (params: ChatParams = {}) => {
 // Hook para buscar chats por termo (autocomplete)
 export const useChatsSearch = (searchTerm: string, limit: number = 10) => {
   return useQuery({
-    queryKey: createQueryKey('chats', 'search', { searchTerm, limit }),
+    queryKey: createQueryKey('chats', { searchTerm, limit }),
     queryFn: () => chatService.searchChats(searchTerm, limit),
     enabled: searchTerm.length >= 2,
     staleTime: 2 * 60 * 1000, // 2 minutos
@@ -55,7 +59,7 @@ export const useChat = (id: string) => {
 // Hook para obter chats por tipo
 export const useChatsPorTipo = (tipo: string) => {
   return useQuery({
-    queryKey: createQueryKey('chats', 'tipo', { tipo }),
+    queryKey: createQueryKey('chats', { tipo }),
     queryFn: () => chatService.getChatsByTipo(tipo),
     enabled: !!tipo,
     staleTime: 5 * 60 * 1000, // 5 minutos
@@ -65,7 +69,7 @@ export const useChatsPorTipo = (tipo: string) => {
 // Hook para obter chats por status
 export const useChatsPorStatus = (status: string) => {
   return useQuery({
-    queryKey: createQueryKey('chats', 'status', { status }),
+    queryKey: createQueryKey('chats', { status }),
     queryFn: () => chatService.getChatsByStatus(status),
     enabled: !!status,
     staleTime: 5 * 60 * 1000, // 5 minutos
@@ -75,7 +79,7 @@ export const useChatsPorStatus = (status: string) => {
 // Hook para obter chats por usuário
 export const useChatsPorUsuario = (usuarioId: string) => {
   return useQuery({
-    queryKey: createQueryKey('chats', 'usuario', { usuarioId }),
+    queryKey: createQueryKey('chats', { usuarioId }),
     queryFn: () => chatService.getChatsByUsuario(usuarioId),
     enabled: !!usuarioId,
     staleTime: 5 * 60 * 1000, // 5 minutos
@@ -83,10 +87,10 @@ export const useChatsPorUsuario = (usuarioId: string) => {
 };
 
 // Hook para obter estatísticas de chats
-export const useChatsStats = (periodoInicio?: string, periodoFim?: string) => {
+export const useChatsStats = (periodo?: { inicio: string; fim: string }) => {
   return useQuery({
-    queryKey: createQueryKey('chats', 'stats', { periodoInicio, periodoFim }),
-    queryFn: () => chatService.getChatsStats(periodoInicio, periodoFim),
+    queryKey: createQueryKey('chats', periodo),
+    queryFn: () => chatService.getChatsStats(periodo),
     staleTime: 10 * 60 * 1000, // 10 minutos
   });
 };

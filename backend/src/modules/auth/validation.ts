@@ -20,7 +20,6 @@ const validatePasswordStrength = (password: string): boolean => {
   const hasUpperCase = /[A-Z]/.test(password);
   const hasLowerCase = /[a-z]/.test(password);
   const hasNumbers = /\d/.test(password);
-  const hasSpecialChars = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
   
   return password.length >= minLength && hasUpperCase && hasLowerCase && hasNumbers;
 };
@@ -183,9 +182,10 @@ export class AuthValidator {
       errors.push('Senha deve conter pelo menos um número');
     }
 
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(senha)) {
-      errors.push('Senha deve conter pelo menos um caractere especial');
-    }
+    // Removida validação de caracteres especiais para compatibilidade
+    // if (!/[!@#$%^&*(),.?":{}|<>]/.test(senha)) {
+    //   errors.push('Senha deve conter pelo menos um caractere especial');
+    // }
 
     return {
       isValid: errors.length === 0,

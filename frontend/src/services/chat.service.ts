@@ -238,32 +238,52 @@ export const validarChat = async (data: CreateChatRequest): Promise<{
 
 export async function buscarOuCriarChatPrivado(userId: string) {
   console.log('🔍 [Chat Service] Buscando chat privado para usuário:', userId);
-  const response = await api.get(`/chat/privado/${userId}`);
-  console.log('📡 [Chat Service] Resposta da API:', response.data);
   
-  // Verificar se a resposta tem a estrutura { success, data, timestamp }
-  if (response.data && response.data.success && response.data.data) {
-    console.log('✅ [Chat Service] Dados extraídos corretamente:', response.data.data);
-    return response.data.data;
+  try {
+    const response = await api.get(`/chat/privado/${userId}`);
+    console.log('📡 [Chat Service] Resposta da API:', response.data);
+    
+    // Verificar se a resposta tem a estrutura { success, data, timestamp }
+    if (response.data && response.data.success && response.data.data) {
+      console.log('✅ [Chat Service] Dados extraídos corretamente:', response.data.data);
+      return response.data;
+    }
+    
+    // Se não tiver a estrutura esperada, retornar a resposta direta
+    console.log('⚠️ [Chat Service] Estrutura inesperada, retornando resposta direta:', response.data);
+    return {
+      success: true,
+      data: response.data,
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('❌ [Chat Service] Erro ao buscar chat privado:', error);
+    throw error;
   }
-  
-  // Se não tiver a estrutura esperada, retornar a resposta direta
-  console.log('⚠️ [Chat Service] Estrutura inesperada, retornando resposta direta:', response.data);
-  return response.data;
 }
 
 export async function buscarChatGeral() {
   console.log('🔍 [Chat Service] Buscando chat geral');
-  const response = await api.get('/chat/geral');
-  console.log('📡 [Chat Service] Resposta chat geral:', response.data);
   
-  // Verificar se a resposta tem a estrutura { success, data, timestamp }
-  if (response.data && response.data.success && response.data.data) {
-    console.log('✅ [Chat Service] Dados chat geral extraídos corretamente:', response.data.data);
-    return response.data.data;
+  try {
+    const response = await api.get('/chat/geral');
+    console.log('📡 [Chat Service] Resposta chat geral:', response.data);
+    
+    // Verificar se a resposta tem a estrutura { success, data, timestamp }
+    if (response.data && response.data.success && response.data.data) {
+      console.log('✅ [Chat Service] Dados chat geral extraídos corretamente:', response.data.data);
+      return response.data;
+    }
+    
+    // Se não tiver a estrutura esperada, retornar a resposta direta
+    console.log('⚠️ [Chat Service] Estrutura inesperada chat geral, retornando resposta direta:', response.data);
+    return {
+      success: true,
+      data: response.data,
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('❌ [Chat Service] Erro ao buscar chat geral:', error);
+    throw error;
   }
-  
-  // Se não tiver a estrutura esperada, retornar a resposta direta
-  console.log('⚠️ [Chat Service] Estrutura inesperada chat geral, retornando resposta direta:', response.data);
-  return response.data;
 } 

@@ -146,7 +146,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
 
   // Conteúdo principal com possíveis restrições
   const conteudoPrincipal = (
-    <div className="flex flex-1 flex-col gap-4 p-4 overflow-y-auto">
+    <div className="flex flex-1 flex-col gap-4 overflow-y-auto">
       {children}
     </div>
   )

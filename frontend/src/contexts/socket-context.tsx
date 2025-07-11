@@ -180,7 +180,8 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       
       // Buscar chat geral
       buscarChatGeral()
-        .then((chatGeral) => {
+        .then((response) => {
+          const chatGeral = response.data || response;
           console.log('✅ Chat geral encontrado:', chatGeral.id);
           setGeneralChatId(chatGeral.id);
         })
@@ -242,6 +243,13 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
 
       console.log('📨 [Socket] Mensagem privada específica:', message);
       handlePrivateMessage(message);
+    });
+
+    // Notificações de nova mensagem
+    socketInstance.on('notificationReceived', (notification: any) => {
+      console.log('🔔 [Socket] Nova notificação recebida:', notification);
+      // Aqui você pode implementar a lógica para mostrar notificações
+      // Por exemplo, mostrar um toast ou atualizar o badge de notificações
     });
 
     // Atualizações de chat
@@ -330,7 +338,24 @@ export function useSocket() {
   const context = useContext(SocketContext);
 
   if (!context) {
-    throw new Error('useSocket must be used within a SocketProvider');
+    console.warn('⚠️ [Socket] useSocket deve ser usado dentro de um SocketProvider');
+    // Retornar valores padrão seguros
+    return {
+      socket: null,
+      isConnected: false,
+      messages: [],
+      generalChatId: null,
+      sendMessage: () => {},
+      sendTyping: () => {},
+      sendStatus: () => {},
+      ping: () => {},
+      onPrivateMessage: undefined,
+      setOnPrivateMessage: () => {},
+      onChatUpdate: undefined,
+      setOnChatUpdate: () => {},
+      onUserTyping: undefined,
+      setOnUserTyping: () => {}
+    };
   }
 
   return context;

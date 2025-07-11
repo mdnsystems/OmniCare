@@ -164,7 +164,18 @@ export default class ChatController {
           }))
         })),
         criador: chat.participantes.find(p => p.usuario?.id === chat.criadoPor)?.usuario,
-        mensagensNaoLidas: chat.mensagensNaoLidas
+        mensagensNaoLidas: chat.mensagensNaoLidas,
+        ultimaMensagem: chat.mensagens[0] ? {
+          id: chat.mensagens[0].id,
+          chatId: chat.mensagens[0].chatId,
+          senderId: chat.mensagens[0].senderId,
+          senderName: chat.mensagens[0].senderName,
+          senderRole: chat.mensagens[0].senderRole,
+          content: chat.mensagens[0].content,
+          timestamp: chat.mensagens[0].timestamp,
+          lida: chat.mensagens[0].leituras.length > 0
+        } : null,
+        naoLidas: chat.mensagensNaoLidas
       }));
 
       console.log('📋 [Chat Controller] Chats formatados:', {
@@ -779,18 +790,18 @@ export default class ChatController {
         return res.status(400).json({ error: 'Usuário autenticado não encontrado.' });
       }
 
+      console.log('🔍 [Chat Controller] Buscando chat privado:', {
+        currentUserId,
+        targetUserId: userId,
+        tenantId
+      });
+
       // Verificar se já existe um chat privado entre os dois usuários
-      const chatExistente = await prisma.chat.findFirst({
+      // Primeiro, buscar todos os chats privados do tenant
+      const chatsPrivados = await prisma.chat.findMany({
         where: {
           tenantId,
-          tipo: 'PRIVADO',
-          participantes: {
-            every: {
-              userId: {
-                in: [currentUserId, userId]
-              }
-            }
-          }
+          tipo: 'PRIVADO'
         },
         include: {
           participantes: {
@@ -813,9 +824,77 @@ export default class ChatController {
         }
       });
 
+      // Filtrar o chat que tem exatamente os dois usuários como participantes
+      const chatExistente = chatsPrivados.find(chat => {
+        const participantesIds = chat.participantes.map(p => p.userId);
+        return participantesIds.length === 2 && 
+               participantesIds.includes(currentUserId) && 
+               participantesIds.includes(userId);
+      });
+
       if (chatExistente) {
-        return res.json(chatExistente);
+        console.log('✅ [Chat Controller] Chat privado existente encontrado:', chatExistente.id);
+        
+        // Buscar mensagens do chat
+        const mensagens = await prisma.mensagem.findMany({
+          where: { chatId: chatExistente.id },
+          orderBy: { timestamp: 'asc' },
+          include: {
+            sender: {
+              select: {
+                id: true,
+                email: true,
+                role: true,
+                ativo: true
+              }
+            }
+          }
+        });
+
+        // Formatar resposta
+        const chatFormatado = {
+          id: chatExistente.id,
+          tenantId: chatExistente.tenantId,
+          tipo: chatExistente.tipo,
+          nome: chatExistente.nome,
+          descricao: chatExistente.descricao,
+          criadoPor: chatExistente.criadoPor,
+          ativo: chatExistente.ativo,
+          createdAt: chatExistente.createdAt,
+          updatedAt: chatExistente.updatedAt,
+          participantes: chatExistente.participantes.map(p => ({
+            id: p.id,
+            chatId: p.chatId,
+            userId: p.userId,
+            tenantId: p.tenantId,
+            admin: p.admin,
+            ativo: p.ativo,
+            createdAt: p.createdAt,
+            updatedAt: p.updatedAt,
+            usuario: p.usuario
+          })),
+          mensagens: mensagens.map(msg => ({
+            id: msg.id,
+            chatId: msg.chatId,
+            senderId: msg.senderId,
+            senderName: msg.senderName,
+            senderRole: msg.senderRole,
+            content: msg.content,
+            timestamp: msg.timestamp,
+            editada: msg.editada,
+            editadaEm: msg.editadaEm,
+            tenantId: msg.tenantId
+          }))
+        };
+
+        return res.json({
+          success: true,
+          data: chatFormatado,
+          timestamp: new Date().toISOString()
+        });
       }
+
+      console.log('🆕 [Chat Controller] Criando novo chat privado');
 
       // Criar novo chat privado
       const novoChat = await prisma.chat.create({
@@ -845,6 +924,7 @@ export default class ChatController {
         ]
       });
 
+      // Buscar chat completo com participantes e mensagens
       const chatComParticipantes = await prisma.chat.findUnique({
         where: { id: novoChat.id },
         include: {
@@ -868,10 +948,49 @@ export default class ChatController {
         }
       });
 
-      res.json(chatComParticipantes);
+      if (!chatComParticipantes) {
+        throw new Error('Erro ao criar chat privado');
+      }
+
+      console.log('✅ [Chat Controller] Novo chat privado criado:', novoChat.id);
+
+      // Formatar resposta
+      const chatFormatado = {
+        id: chatComParticipantes.id,
+        tenantId: chatComParticipantes.tenantId,
+        tipo: chatComParticipantes.tipo,
+        nome: chatComParticipantes.nome,
+        descricao: chatComParticipantes.descricao,
+        criadoPor: chatComParticipantes.criadoPor,
+        ativo: chatComParticipantes.ativo,
+        createdAt: chatComParticipantes.createdAt,
+        updatedAt: chatComParticipantes.updatedAt,
+        participantes: chatComParticipantes.participantes.map(p => ({
+          id: p.id,
+          chatId: p.chatId,
+          userId: p.userId,
+          tenantId: p.tenantId,
+          admin: p.admin,
+          ativo: p.ativo,
+          createdAt: p.createdAt,
+          updatedAt: p.updatedAt,
+          usuario: p.usuario
+        })),
+        mensagens: [] // Chat novo não tem mensagens
+      };
+
+      res.json({
+        success: true,
+        data: chatFormatado,
+        timestamp: new Date().toISOString()
+      });
     } catch (error) {
-      console.error('Erro ao buscar ou criar chat privado:', error);
-      res.status(500).json({ error: 'Erro interno do servidor' });
+      console.error('❌ [Chat Controller] Erro ao buscar ou criar chat privado:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Erro interno do servidor',
+        timestamp: new Date().toISOString()
+      });
     }
   }
 

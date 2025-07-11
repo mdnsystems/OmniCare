@@ -53,7 +53,7 @@ export function Login() {
           <div className="text-white text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Bem-vindo ao OmniCare</h2>
             <p className="text-lg">
-              Sistema de gestão médica completo para sua clínica
+              Sistema de gestão completo para sua clínica
             </p>
           </div>
 

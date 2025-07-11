@@ -44,7 +44,7 @@ const Faturamento = createLazyComponent(() => import('./pages/financeiro/faturam
 const Pagamentos = createLazyComponent(() => import('./pages/financeiro/pagamentos'), 'Pagamentos');
 const Relatorios = createLazyComponent(() => import('./pages/financeiro/relatorios'), 'Relatorios');
 const ControleFinanceiro = createLazyComponent(() => import('./pages/admin/ControleFinanceiro'), 'ControleFinanceiro');
-const ChatPage = createLazyComponent(() => import('./pages/chat'), 'ChatPage');
+const ChatPage = createLazyComponent(() => import('./pages/chat')); // default export
 const SuperAdminDashboard = createLazyComponent(() => import('./pages/super-admin/SuperAdminDashboard'), 'SuperAdminDashboard');
 const GestaoClinicas = createLazyComponent(() => import('./pages/super-admin/GestaoClinicas'), 'GestaoClinicas');
 const DetalhesClinica = createLazyComponent(() => import('./pages/super-admin/DetalhesClinica'), 'DetalhesClinica');

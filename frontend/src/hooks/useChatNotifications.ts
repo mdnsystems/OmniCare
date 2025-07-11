@@ -1,84 +1,104 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useSocket } from '@/contexts/socket-context';
 import { useAuth } from '@/contexts/AuthContext';
-import { getChats } from '@/services/chat.service';
 
-interface ChatNotification {
-  hasUnreadMessages: boolean;
-  unreadCount: number;
-  lastNotificationTime: Date | null;
+interface Notification {
+  id: string;
+  titulo: string;
+  corpo: string;
+  tipo: string;
+  lida: boolean;
+  createdAt: string;
 }
 
 export function useChatNotifications() {
-  const { socket, setOnPrivateMessage, setOnChatUpdate } = useSocket();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  
+  // Usar try-catch para evitar erros se o contexto não estiver disponível
+  let socketContext;
+  try {
+    socketContext = useSocket();
+  } catch (error) {
+    console.warn('⚠️ [Notifications] Socket context não disponível:', error);
+    socketContext = { socket: null, isConnected: false };
+  }
+  
+  const { socket, isConnected } = socketContext;
   const { user } = useAuth();
-  const [notification, setNotification] = useState<ChatNotification>({
-    hasUnreadMessages: false,
-    unreadCount: 0,
-    lastNotificationTime: null
-  });
 
-  // Função para carregar notificações
-  const loadNotifications = useCallback(async () => {
-    try {
-      const chats = await getChats();
+  useEffect(() => {
+    if (!socket || !isConnected) {
+      console.log('🔔 [Notifications] Socket não conectado, pulando configuração de listeners');
+      return;
+    }
+
+    // Listener para novas notificações
+    const handleNewNotification = (notification: Notification) => {
+      console.log('🔔 [Notifications] Nova notificação recebida:', notification);
       
-      if (!Array.isArray(chats)) {
-        return;
+      setNotifications(prev => [notification, ...prev]);
+      setUnreadCount(prev => prev + 1);
+
+      // Mostrar notificação visual (toast)
+      if (notification.tipo === 'mensagem') {
+        showToast(notification);
       }
-      
-      const totalUnread = chats.reduce((total, chat) => {
-        return total + (chat.naoLidas || 0);
-      }, 0);
-      
-      setNotification(prev => ({
-        ...prev,
-        hasUnreadMessages: totalUnread > 0,
-        unreadCount: totalUnread
-      }));
-    } catch (error) {
-      console.error('❌ [Chat Notifications] Erro ao carregar notificações:', error);
-    }
-  }, []);
+    };
 
-  // Configurar listeners de WebSocket
-  useEffect(() => {
-    if (socket) {
-      // Listener para mensagens privadas
-      setOnPrivateMessage((data: any) => {
-        if (data && data.senderId !== user?.id) {
-          setNotification(prev => ({
-            hasUnreadMessages: true,
-            unreadCount: prev.unreadCount + 1,
-            lastNotificationTime: new Date()
-          }));
-        }
-      });
+    socket.on('notificationReceived', handleNewNotification);
 
-      // Listener para atualizações de chat
-      setOnChatUpdate((data: any) => {
-        loadNotifications();
+    return () => {
+      if (socket) {
+        socket.off('notificationReceived', handleNewNotification);
+      }
+    };
+  }, [socket, isConnected]);
+
+  const showToast = (notification: Notification) => {
+    // Verificar se o navegador suporta notificações
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(notification.titulo, {
+        body: notification.corpo,
+        icon: '/favicon.ico',
+        tag: 'chat-notification'
       });
     }
-  }, [socket, user?.id, setOnPrivateMessage, setOnChatUpdate, loadNotifications]);
 
-  // Carregar notificações inicialmente
-  useEffect(() => {
-    loadNotifications();
-  }, [loadNotifications]);
+    // Mostrar toast na interface (se disponível)
+    // Aqui você pode integrar com uma biblioteca de toast como react-hot-toast
+    console.log('📢 [Notifications] Toast:', notification.titulo);
+  };
 
-  // Função para limpar notificações (quando o usuário acessa o chat)
-  const clearNotifications = useCallback(() => {
-    setNotification({
-      hasUnreadMessages: false,
-      unreadCount: 0,
-      lastNotificationTime: null
-    });
-  }, []);
+  const markAsRead = (notificationId: string) => {
+    setNotifications(prev => 
+      prev.map(notif => 
+        notif.id === notificationId 
+          ? { ...notif, lida: true }
+          : notif
+      )
+    );
+    setUnreadCount(prev => Math.max(0, prev - 1));
+  };
+
+  const clearNotifications = () => {
+    setNotifications([]);
+    setUnreadCount(0);
+  };
+
+  const requestNotificationPermission = async () => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      const permission = await Notification.requestPermission();
+      return permission === 'granted';
+    }
+    return Notification.permission === 'granted';
+  };
 
   return {
-    notification,
+    notifications,
+    unreadCount,
+    markAsRead,
     clearNotifications,
-    loadNotifications
+    requestNotificationPermission
   };
 } 

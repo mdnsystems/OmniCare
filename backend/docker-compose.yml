@@ -1,0 +1,186 @@
+# =============================================================================
+# DOCKER COMPOSE - SWIFT CLINIC API
+# =============================================================================
+# 
+# Configuração completa para desenvolvimento e produção
+# Inclui: PostgreSQL, Redis, e aplicação Node.js
+# 
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # =============================================================================
+  # BANCO DE DADOS POSTGRESQL
+  # =============================================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: omnicare_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: omnicare
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    networks:
+      - omnicare_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d omnicare"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # =============================================================================
+  # REDIS (CACHE E SESSÕES)
+  # =============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: omnicare_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - omnicare_network
+    command: redis-server --appendonly yes --requirepass redis_password
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  # =============================================================================
+  # APLICAÇÃO PRINCIPAL
+  # =============================================================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: ${BUILD_TARGET:-runner}
+    container_name: omnicare_api
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      # Configurações do Servidor
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 8080
+      HOST: 0.0.0.0
+      
+      # Configurações do Banco de Dados
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/omnicare?schema=public
+      
+      # Configurações JWT
+      JWT_SECRET: ${JWT_SECRET:-sua-chave-secreta-jwt-unica-e-segura-com-pelo-menos-32-caracteres-aqui}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-sua-chave-secreta-refresh-unica-e-segura-com-pelo-menos-32-caracteres-aqui}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1h}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      
+      # Configurações CORS
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173,http://localhost:5174}
+      
+      # Configurações de Rate Limiting
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-60000}
+      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-100}
+      RATE_LIMIT_SKIP_SUCCESSFUL_REQUESTS: ${RATE_LIMIT_SKIP_SUCCESSFUL_REQUESTS:-false}
+      RATE_LIMIT_SKIP_FAILED_REQUESTS: ${RATE_LIMIT_SKIP_FAILED_REQUESTS:-false}
+      
+      # Configurações de Segurança
+      BCRYPT_ROUNDS: ${BCRYPT_ROUNDS:-12}
+      PASSWORD_MIN_LENGTH: ${PASSWORD_MIN_LENGTH:-8}
+      PASSWORD_REQUIRE_UPPERCASE: ${PASSWORD_REQUIRE_UPPERCASE:-true}
+      PASSWORD_REQUIRE_LOWERCASE: ${PASSWORD_REQUIRE_LOWERCASE:-true}
+      PASSWORD_REQUIRE_NUMBERS: ${PASSWORD_REQUIRE_NUMBERS:-true}
+      PASSWORD_REQUIRE_SPECIAL_CHARS: ${PASSWORD_REQUIRE_SPECIAL_CHARS:-false}
+      
+      # Configurações de Email
+      EMAIL_HOST: ${EMAIL_HOST:-smtp.gmail.com}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_SECURE: ${EMAIL_SECURE:-false}
+      EMAIL_USER: ${EMAIL_USER:-}
+      EMAIL_PASS: ${EMAIL_PASS:-}
+      
+      # Configurações Z-API (WhatsApp)
+      ZAPI_URL: ${ZAPI_URL:-https://api.z-api.io}
+      ZAPI_DEFAULT_INSTANCE_ID: ${ZAPI_DEFAULT_INSTANCE_ID:-}
+      
+      # Configurações de Log
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      
+      # Configurações de Upload
+      MAX_FILE_SIZE: ${MAX_FILE_SIZE:-10485760}
+      
+      # Configurações de Frontend
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    networks:
+      - omnicare_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:8080/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # =============================================================================
+  # PRISMA STUDIO (OPCIONAL - APENAS DESENVOLVIMENTO)
+  # =============================================================================
+  prisma-studio:
+    image: node:18-alpine
+    container_name: omnicare_prisma_studio
+    restart: "no"
+    working_dir: /app
+    ports:
+      - "5555:5555"
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/omnicare?schema=public
+    volumes:
+      - ./prisma:/app/prisma
+      - ./generated:/app/generated
+    networks:
+      - omnicare_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      sh -c "
+        npm install -g prisma &&
+        prisma generate &&
+        prisma studio --hostname 0.0.0.0 --port 5555
+      "
+    profiles:
+      - development
+
+# =============================================================================
+# VOLUMES
+# =============================================================================
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+# =============================================================================
+# REDES
+# =============================================================================
+networks:
+  omnicare_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16 

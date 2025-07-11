@@ -4,6 +4,7 @@ import { Usuario, RoleUsuario } from '@/types/api';
 export interface LoginRequest {
   email: string;
   senha: string;
+  tenantId?: string;
 }
 
 export interface LoginResponse {

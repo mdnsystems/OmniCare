@@ -1,7 +1,7 @@
 {
-  "name": "swift-med-api",
+  "name": "omnicare-api",
   "version": "1.0.0",
-  "description": "API REST/GraphQL moderna e escalável para plataforma Swift Clinic com suporte multitenant",
+  "description": "API REST/GraphQL moderna e escalável para plataforma Omni Care com suporte multitenant",
   "main": "src/server.ts",
   "scripts": {
     "dev": "nodemon src/server.ts",
@@ -23,7 +23,7 @@
     "typescript",
     "prisma"
   ],
-  "author": "Swift Clinic Team",
+  "author": "Omni Care Team",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {

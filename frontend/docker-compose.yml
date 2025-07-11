@@ -1,0 +1,107 @@
+version: '3.8'
+
+services:
+  # ===========================================
+  # Serviço de Desenvolvimento
+  # ===========================================
+  frontend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: omnicare-frontend-dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    networks:
+      - omnicare-network
+    profiles:
+      - dev
+
+  # ===========================================
+  # Serviço de Produção
+  # ===========================================
+  frontend-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: omnicare-frontend-prod
+    ports:
+      - "80:80"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - omnicare-network
+    profiles:
+      - prod
+
+  # ===========================================
+  # Serviço de Preview (Build local)
+  # ===========================================
+  frontend-preview:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: omnicare-frontend-preview
+    ports:
+      - "4173:80"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - omnicare-network
+    profiles:
+      - preview
+
+  # ===========================================
+  # Serviço de Build (apenas para build)
+  # ===========================================
+  frontend-build:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: omnicare-frontend-build
+    volumes:
+      - ./dist:/app/dist
+    command: ["echo", "Build completed"]
+    profiles:
+      - build
+
+  # ===========================================
+  # Nginx reverso (opcional para produção)
+  # ===========================================
+  nginx:
+    image: nginx:alpine
+    container_name: omnicare-nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./dist:/usr/share/nginx/html:ro
+    depends_on:
+      - frontend-prod
+    networks:
+      - omnicare-network
+    profiles:
+      - nginx
+
+# ===========================================
+# Redes
+# ===========================================
+networks:
+  omnicare-network:
+    driver: bridge
+
+# ===========================================
+# Volumes (se necessário para persistência)
+# ===========================================
+volumes:
+  node_modules: 

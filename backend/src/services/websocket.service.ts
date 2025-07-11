@@ -309,6 +309,73 @@ export class WebSocketService {
       }
     });
 
+    // Mensagem privada específica
+    socket.on('privateMessage', async (data: any) => {
+      try {
+        console.log('Mensagem privada recebida:', data);
+
+        // Verificar se o usuário é participante do chat
+        const participante = await prisma.chatParticipante.findUnique({
+          where: {
+            chatId_userId: {
+              chatId: data.chatId,
+              userId: socket.data.userId
+            }
+          }
+        });
+
+        if (!participante) {
+          socket.emit('error', 'Você não tem acesso a este chat');
+          return;
+        }
+
+        // Buscar informações do usuário
+        const usuario = await prisma.usuario.findUnique({
+          where: { id: socket.data.userId }
+        });
+
+        if (!usuario) {
+          socket.emit('error', 'Usuário não encontrado');
+          return;
+        }
+
+        // Criar mensagem
+        const mensagem = await prisma.mensagem.create({
+          data: {
+            tenantId: socket.data.tenantId,
+            chatId: data.chatId,
+            senderId: socket.data.userId,
+            senderName: usuario.email,
+            senderRole: usuario.role,
+            content: data.content
+          },
+          include: {
+            sender: {
+              select: {
+                id: true,
+                email: true,
+                role: true,
+                ativo: true
+              }
+            }
+          }
+        });
+
+        const mensagemFormatada = this.formatMensagem(mensagem);
+
+        // Enviar para todos os participantes do chat (incluindo o remetente)
+        this.io.to(`chat:${data.chatId}`).emit('newMessage', mensagemFormatada);
+
+        // Enviar notificação específica para mensagem privada
+        await this.criarNotificacoes(mensagemFormatada, data.chatId);
+
+        console.log(`Mensagem privada enviada: ${mensagem.id}`);
+      } catch (error) {
+        console.error('Erro ao enviar mensagem privada:', error);
+        socket.emit('error', 'Erro ao enviar mensagem privada');
+      }
+    });
+
     // Editar mensagem
     socket.on('editMessage', async (data: any) => {
       try {
@@ -396,6 +463,51 @@ export class WebSocketService {
         });
       } catch (error) {
         console.error('Erro ao marcar mensagem como lida:', error);
+      }
+    });
+
+    // Indicador de digitação
+    socket.on('typing', async (data: any) => {
+      try {
+        // Verificar se o usuário é participante do chat
+        const participante = await prisma.chatParticipante.findUnique({
+          where: {
+            chatId_userId: {
+              chatId: data.chatId,
+              userId: socket.data.userId
+            }
+          }
+        });
+
+        if (!participante) {
+          return;
+        }
+
+        if (data.isTyping) {
+          // Adicionar usuário à lista de digitação
+          if (!this.typingUsers.has(data.chatId)) {
+            this.typingUsers.set(data.chatId, new Set());
+          }
+          this.typingUsers.get(data.chatId)!.add(socket.data.userId);
+        } else {
+          // Remover usuário da lista de digitação
+          const typingSet = this.typingUsers.get(data.chatId);
+          if (typingSet) {
+            typingSet.delete(socket.data.userId);
+            if (typingSet.size === 0) {
+              this.typingUsers.delete(data.chatId);
+            }
+          }
+        }
+
+        // Enviar evento de digitação para outros participantes
+        socket.to(`chat:${data.chatId}`).emit('userTyping', {
+          chatId: data.chatId,
+          userId: socket.data.userId,
+          isTyping: data.isTyping
+        });
+      } catch (error) {
+        console.error('Erro ao processar indicador de digitação:', error);
       }
     });
   }

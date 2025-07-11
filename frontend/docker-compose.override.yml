@@ -1,0 +1,52 @@
+# ===========================================
+# Docker Compose Override para Desenvolvimento Local
+# Este arquivo é carregado automaticamente pelo docker-compose
+# ===========================================
+
+version: '3.8'
+
+services:
+  frontend-dev:
+    environment:
+      # Configurações específicas para desenvolvimento
+      - VITE_API_URL=http://localhost:8080/api
+      - VITE_APP_TITLE=OmniCare (Dev)
+      - VITE_APP_VERSION=1.0.0-dev
+      # Configurações para hot reload
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+      - FAST_REFRESH=true
+    volumes:
+      # Mapeamento completo para desenvolvimento
+      - .:/app
+      - /app/node_modules
+      - /app/dist
+    # Configurações de desenvolvimento
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+
+  # Configuração para desenvolvimento com backend local
+  frontend-dev-with-backend:
+    profiles:
+      - dev-full
+    depends_on:
+      - backend-dev
+    environment:
+      - VITE_API_URL=http://backend-dev:8080/api
+      - VITE_WS_URL=ws://backend-dev:8080
+
+  # Serviço de backend simulado para desenvolvimento
+  backend-dev:
+    image: mockserver/mockserver:latest
+    container_name: omnicare-backend-dev
+    ports:
+      - "8080:1080"
+    environment:
+      - MOCKSERVER_PROPERTY_FILE=/config/mockserver.properties
+    volumes:
+      - ./mocks:/config
+    networks:
+      - omnicare-network
+    profiles:
+      - dev-full 
